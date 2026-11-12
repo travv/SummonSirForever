@@ -11,24 +11,73 @@ local W = {
 }
 addonData.W = W
 
--- Dracula palette (https://draculatheme.com, MIT)
+-- Color names used across the modules, mapped to the game's standard font
+-- colors so every panel reads like a stock Forever window (decision 2026-11-11:
+-- default styling, not Dracula). Keep the names; change values here only.
 W.colors = {
-  bg      = { 0x28, 0x2a, 0x36 },
-  line    = { 0x44, 0x47, 0x5a },
-  fg      = { 0xf8, 0xf8, 0xf2 },
-  comment = { 0x62, 0x72, 0xa4 },
-  cyan    = { 0x8b, 0xe9, 0xfd },
-  green   = { 0x50, 0xfa, 0x7b },
-  orange  = { 0xff, 0xb8, 0x6c },
-  pink    = { 0xff, 0x79, 0xc6 },
-  purple  = { 0xbd, 0x93, 0xf9 },
-  red     = { 0xff, 0x55, 0x55 },
-  yellow  = { 0xf1, 0xfa, 0x8c },
+  bg      = { 0x00, 0x00, 0x00 },  -- tooltip backdrop black
+  line    = { 0x40, 0x40, 0x40 },  -- row stripes
+  fg      = { 0xff, 0xff, 0xff },  -- HIGHLIGHT_FONT_COLOR
+  comment = { 0x80, 0x80, 0x80 },  -- GRAY_FONT_COLOR (disabled / hints)
+  cyan    = { 0x82, 0xc5, 0xff },  -- BATTLENET_FONT_COLOR (section headings)
+  green   = { 0x1a, 0xff, 0x1a },  -- GREEN_FONT_COLOR
+  orange  = { 0xff, 0x80, 0x40 },  -- ORANGE_FONT_COLOR (warnings)
+  pink    = { 0xa3, 0x35, 0xee },  -- epic purple (rare accents)
+  purple  = { 0x87, 0x88, 0xee },  -- Warlock class color (titles)
+  red     = { 0xff, 0x20, 0x20 },  -- RED_FONT_COLOR
+  yellow  = { 0xff, 0xd2, 0x00 },  -- NORMAL_FONT_COLOR gold (money, keys)
 }
 
 function W.rgb(name, alpha)
   local c = W.colors[name]
   return c[1] / 255, c[2] / 255, c[3] / 255, alpha or 1
+end
+
+-- the stock tooltip backdrop: dark, bordered, what most addons' floating
+-- panels look like. border = optional color name for the edge
+function W.stockBackdrop(frame, border, alpha)
+  frame:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+  })
+  frame:SetBackdropColor(0, 0, 0, alpha or 0.85)
+  if border then
+    frame:SetBackdropBorderColor(W.rgb(border))
+  else
+    frame:SetBackdropBorderColor(1, 1, 1)
+  end
+end
+
+-- a template's child frame by key, or nil when the template lacks it
+function W.child(frame, key)
+  local c = frame and frame[key]
+  if type(c) == "table" then return c end
+  return nil
+end
+
+-- a stock window with a title bar, close button and inset (ButtonFrameTemplate)
+function W.stockWindow(name, parent, width, height, title, portraitIcon)
+  local f = CreateFrame("Frame", name, parent or UIParent, "ButtonFrameTemplate")
+  f:SetSize(width, height)
+  local titleBox = W.child(f, "TitleContainer")
+  if titleBox and W.child(titleBox, "TitleText") then
+    titleBox.TitleText:SetText(title or "")
+  end
+  local portraitBox = W.child(f, "PortraitContainer")
+  if portraitIcon and portraitBox and W.child(portraitBox, "portrait") then
+    portraitBox.portrait:SetTexture(portraitIcon)
+  elseif ButtonFrameTemplate_HidePortrait then
+    ButtonFrameTemplate_HidePortrait(f)
+  end
+  f:SetMovable(true)
+  f:EnableMouse(true)
+  f:SetClampedToScreen(true)
+  f:RegisterForDrag("LeftButton")
+  f:SetScript("OnDragStart", f.StartMoving)
+  f:SetScript("OnDragStop", f.StopMovingOrSizing)
+  return f
 end
 
 function W.hex(name, text)

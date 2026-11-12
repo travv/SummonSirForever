@@ -68,8 +68,10 @@ settings = {
       SteaSummonSave.windowSize = 1
     end
 
-    if SteaSummonSave.listSize == nil then
-      SteaSummonSave.listSize = 1.5
+    if SteaSummonSave.listSize == nil or not SteaSummonSave.listSizeV2 then
+      -- w11: the scroll list is no longer pre-shrunk to half, so 1.0 is normal size
+      SteaSummonSave.listSize = 1
+      SteaSummonSave.listSizeV2 = true
     end
 
     if SteaSummonSave.waiting == nil then
@@ -169,7 +171,7 @@ settings = {
     SteaSummonSave.saychat = L["Summoning %p, please click the portal"]
     SteaSummonSave.experimental = false
     SteaSummonSave.windowSize = 1
-    SteaSummonSave.listSize = 1.5
+    SteaSummonSave.listSize = 1
     SteaSummonSave.waiting = {}
     SteaSummonSave.timeStamp = 0
     SteaSummonSave.waitingKeepTime = 5

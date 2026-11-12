@@ -18,66 +18,59 @@ local function dim(text) return W.hex("comment", text) end
 
 function UI:build()
   if self.frame then return self.frame end
-  local f = CreateFrame("Frame", "SteaWarlockPanel", UIParent, "BackdropTemplate")
-  f:SetSize(360, 430)
+  local listH = 30 + UI.ROWS * 22 + 8 -- never-paid heading + rows
+  local f = W.stockWindow("SteaWarlockPanel", UIParent, 380, 500, "Summon ledger", "Interface/ICONS/INV_Misc_Coin_02")
   f:SetPoint("CENTER", UIParent, "CENTER", 260, 0)
   f:SetFrameStrata("DIALOG")
-  f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
-  f:SetBackdropColor(W.rgb("bg", 0.96))
-  f:SetBackdropBorderColor(W.rgb("line"))
-  f:SetMovable(true)
-  f:EnableMouse(true)
-  f:RegisterForDrag("LeftButton")
-  f:SetScript("OnDragStart", f.StartMoving)
-  f:SetScript("OnDragStop", f.StopMovingOrSizing)
-  f:SetClampedToScreen(true)
   table.insert(UISpecialFrames, "SteaWarlockPanel") -- Escape closes it
 
-  f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  f.title:SetPoint("TOPLEFT", 12, -10)
-  f.title:SetText("Summon ledger")
-  f.title:SetTextColor(W.rgb("purple"))
-
-  f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-  f.close:SetPoint("TOPRIGHT", 2, 2)
+  -- the inset holds the never-paid list at the bottom
+  local inset = W.child(f, "Inset") or f
+  if inset ~= f then
+    f.Inset:ClearAllPoints()
+    f.Inset:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 8)
+    f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
+    f.Inset:SetHeight(listH)
+  end
 
   f.opts = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  f.opts:SetSize(70, 20)
-  f.opts:SetPoint("TOPRIGHT", -30, -8)
+  f.opts:SetSize(80, 22)
+  f.opts:SetPoint("TOPRIGHT", f, "TOPRIGHT", -12, -28)
   f.opts:SetText("Options")
   f.opts:SetScript("OnClick", function()
     W.options:open(function(opened) if opened then f:Hide() end end)
   end)
 
   f.body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  f.body:SetPoint("TOPLEFT", 12, -34)
-  f.body:SetPoint("RIGHT", -12, 0)
+  f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -30)
+  f.body:SetPoint("RIGHT", f.opts, "LEFT", -8, 0)
+  f.body:SetPoint("BOTTOM", inset, "TOP", 0, 4)
   f.body:SetJustifyH("LEFT")
   f.body:SetJustifyV("TOP")
   f.body:SetSpacing(3)
-  f.body:SetTextColor(W.rgb("fg"))
 
   f.npTitle = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  f.npTitle:SetPoint("BOTTOMLEFT", 12, 12 + UI.ROWS * 22 + 4)
-  f.npTitle:SetTextColor(W.rgb("red"))
+  f.npTitle:SetPoint("TOPLEFT", inset, "TOPLEFT", 8, -8)
 
   for i = 1, UI.ROWS do
-    local r = CreateFrame("Frame", nil, f)
-    r:SetSize(336, 20)
-    r:SetPoint("BOTTOMLEFT", 12, 12 + (UI.ROWS - i) * 22)
+    local r = CreateFrame("Frame", nil, inset)
+    r:SetHeight(20)
+    r:SetPoint("TOPLEFT", inset, "TOPLEFT", 6, -(30 + (i - 1) * 22))
+    r:SetPoint("RIGHT", inset, "RIGHT", -6, 0)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
     r.bg:SetAllPoints()
-    r.bg:SetColorTexture(W.rgb("line", i % 2 == 0 and 0.35 or 0.6))
+    r.bg:SetColorTexture(1, 1, 1, i % 2 == 0 and 0.04 or 0.09)
     r.text = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     r.text:SetPoint("LEFT", 4, 0)
-    r.text:SetPoint("RIGHT", -110, 0)
+    r.text:SetPoint("RIGHT", -112, 0)
     r.text:SetJustifyH("LEFT")
+    r.text:SetWordWrap(false)
     r.paid = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
     r.paid:SetSize(48, 18)
-    r.paid:SetPoint("RIGHT", -56, 0)
+    r.paid:SetPoint("RIGHT", -58, 0)
     r.paid:SetText("Paid")
     r.block = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
-    r.block:SetSize(54, 18)
+    r.block:SetSize(56, 18)
     r.block:SetPoint("RIGHT", 0, 0)
     r:Hide()
     UI.rows[i] = r
@@ -168,18 +161,19 @@ function UI:toggle()
   if f:IsShown() then f:Hide() else f:Show(); self:refresh() end
 end
 
--- a small "$" button on the summon window, added the first time it exists
+-- "Ledger" button in the summon window's button row (left of Menu), added
+-- the first time the window exists
 function UI:attachButton()
   if self.dollar or not SteaSummonFrame then return end
-  -- sits left of AFK in the Dracula top bar: [>] [Ad] [AFK] [$]
-  local b = addonData.util:flatButton("SteaWarlockLedgerButton", SteaSummonFrame, 24, 20, "$", 12)
-  b:SetPoint("TOPRIGHT", SteaSummonFrame, "TOPRIGHT", -130, -6)
-  b:SetTextTint("yellow")
-  b:SetFrameLevel(3)
+  local b = CreateFrame("Button", "SteaWarlockLedgerButton", SteaSummonFrame, "UIPanelButtonTemplate")
+  b:SetSize(56, 22)
+  b:SetPoint("TOPRIGHT", SteaSummonFrame, "TOPRIGHT", -66, -72)
+  b:SetText("Ledger")
   b:SetScript("OnClick", function() UI:toggle() end)
   b:SetScript("OnEnter", function(this)
     GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
     GameTooltip:AddLine("Summon ledger")
+    GameTooltip:AddLine("Who paid, gold per hour, never-paid list. Also /sw.", 1, 1, 1, true)
     GameTooltip:Show()
   end)
   b:SetScript("OnLeave", function() GameTooltip:Hide() end)

@@ -18,6 +18,12 @@ local function hasSummonMana()
   return (not ok) or result
 end
 
+-- "Location: Nijel's Point, Desolace" with the label in the standard gold
+local function goldLabel(text)
+  return (string.gsub(text, "^([^:]+:)", "|cffffd200%1|r", 1))
+end
+local DESTINATION_UNSET = "|cffffd200Destination:|r |cff808080not set. Click to summon to where you stand.|r"
+
 -- API compat: create a frame, falling back to another (or no) template when the
 -- client no longer ships the classic-era one
 local function CreateFrameCompat(frameType, name, parent, template, fallbackTemplate)
@@ -62,35 +68,31 @@ local summon = {
 
   reConfigureFrames = function(self)
     if SteaSummonFrame and not SteaSummonFrame.location then
-      -- Dracula restyle: 12pt readable text under the button row, left
-      -- aligned next to the shard icon (was 8pt at half alpha)
-      SteaSummonFrame.location = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.location:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
-      SteaSummonFrame.location:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 68, -32)
-      SteaSummonFrame.location:SetPoint("RIGHT", -100, 0)
+      -- header line 1, left: where the warlock stands (shared text: counts sit to its right)
+      SteaSummonFrame.location = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+      SteaSummonFrame.location:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 14, -27)
+      SteaSummonFrame.location:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -160, 0)
       SteaSummonFrame.location:SetJustifyH("LEFT")
-      SteaSummonFrame.location:SetJustifyV("TOP")
-      SteaSummonFrame.location:SetTextColor(addonData.util:rgb("fg"))
+      SteaSummonFrame.location:SetWordWrap(false)
       SteaSummonFrame.location:SetText("")
     end
-  
+
     if SteaSummonFrame and not SteaSummonFrame.destination then
-      SteaSummonFrame.destination = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.destination:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
-      SteaSummonFrame.destination:SetPoint("TOPLEFT", SteaSummonFrame.location, "BOTTOMLEFT", 0, -2)
-      SteaSummonFrame.destination:SetPoint("RIGHT", SteaSummonFrame.location, "RIGHT")
+      -- header line 2, left: where summons go (click to set / unset)
+      SteaSummonFrame.destination = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+      SteaSummonFrame.destination:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 14, -46)
+      SteaSummonFrame.destination:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -92, 0)
       SteaSummonFrame.destination:SetJustifyH("LEFT")
-      SteaSummonFrame.destination:SetJustifyV("TOP")
-      SteaSummonFrame.destination:SetTextColor(addonData.util:rgb("cyan"))
-      SteaSummonFrame.destination:SetText("")
+      SteaSummonFrame.destination:SetWordWrap(false)
+      SteaSummonFrame.destination:SetText(DESTINATION_UNSET)
     end
-  
+
     if SteaSummonFrame and not SteaSummonFrame.status then
-      SteaSummonFrame.status = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.status:SetFont("Fonts\\FRIZQT__.TTF", 11, "")
-      SteaSummonFrame.status:SetPoint("TOPRIGHT","SteaSummonFrame", "TOPRIGHT", -10, -32)
+      -- header line 1, right: warlock / clicker counts in the group
+      SteaSummonFrame.status = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+      SteaSummonFrame.status:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -14, -29)
       SteaSummonFrame.status:SetJustifyH("RIGHT")
-      SteaSummonFrame.status:SetTextColor(addonData.util:rgb("comment"))
+      SteaSummonFrame.status:SetWordWrap(false)
       SteaSummonFrame.status:SetText("")
     end
     
@@ -170,11 +172,11 @@ local summon = {
 
       if IsInGroup(LE_PARTY_CATEGORY_HOME) and self.location ~= "" and self.zone ~= nil then
         if self.localLocks and self.localLocks + self.localClickers > 2 then
-          SteaSummonFrame.status:SetTextColor(addonData.util:rgb("green"))
+          SteaSummonFrame.status:SetTextColor(0.1, 1, 0.1) -- enough people to summon
         else
-          SteaSummonFrame.status:SetTextColor(addonData.util:rgb("comment"))
+          SteaSummonFrame.status:SetTextColor(1, 1, 1)
         end
-        SteaSummonFrame.status:SetText(L["Warlocks"] .. " " .. locks .. "\n" .. L["Clickers"] .. " "..  clicks)
+        SteaSummonFrame.status:SetText(L["Warlocks"] .. " " .. locks .. "   " .. L["Clickers"] .. " "..  clicks)
       else
         SteaSummonFrame.status:SetText("")
       end
@@ -627,99 +629,97 @@ local summon = {
 
     if not SteaSummonFrame then
 
-      local f = CreateFrame("Frame", "SteaSummonFrame", UIParent, "BackdropTemplate")
-      f:SetPoint("CENTER")
-      f:SetSize(300, 250)
-      f:SetScale(SteaSummonSave.windowSize)
+      -- Stock Forever window: ButtonFrameTemplate gives the title bar, the
+      -- portrait circle (we put the Ritual of Summoning icon in it), the
+      -- close button and an inset for the queue. Header below the title:
+      --   line 1: Location ............ Warlocks n  Clickers n
+      --   line 2: Destination (click)... [shard] n
+      --   row 3:  [Next] [Summon me] ............ [AFK] [Ad] [Ledger] [Menu]
+      local MIN_W, MIN_H = 360, 180
+      local HEADER_H = 106
 
+      local f = CreateFrame("Frame", "SteaSummonFrame", UIParent, "ButtonFrameTemplate")
+      f:SetPoint("CENTER")
+      f:SetSize(400, 340)
+      f:SetScale(SteaSummonSave.windowSize)
+      f:SetToplevel(true)
+      f.minWidth, f.minHeight, f.headerHeight = MIN_W, MIN_H, HEADER_H
+
+      -- template children are tables; guard so a leaner template can't error
+      local function child(frame, key)
+        local c = frame and frame[key]
+        if type(c) == "table" then return c end
+        return nil
+      end
+      if child(f, "TitleContainer") and child(f.TitleContainer, "TitleText") then
+        f.TitleContainer.TitleText:SetText("SummonSir")
+      end
+      if child(f, "PortraitContainer") and child(f.PortraitContainer, "portrait") then
+        f.PortraitContainer.portrait:SetTexture("Interface/ICONS/Spell_Shadow_Twilight")
+      elseif ButtonFrameTemplate_HidePortrait then
+        ButtonFrameTemplate_HidePortrait(f)
+      end
+      if child(f, "CloseButton") then
+        f.CloseButton:SetScript("OnClick", function() addonData.summon:showSummonsToggle() end)
+      end
+      if child(f, "Inset") then
+        f.Inset:ClearAllPoints()
+        f.Inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -HEADER_H)
+        f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
+      end
+
+      --- saved position and size, never smaller than the layout needs
       local wpos = addonData.settings:getWindowPos()
       if wpos and #wpos > 0 then
         db("summon.display",  wpos[1], wpos[2], wpos[3], wpos[4], wpos[5], "width:", wpos["width"], "height:", wpos["height"])
         f:ClearAllPoints()
         f:SetPoint(wpos[1], wpos[2], wpos[3], wpos[4], wpos[5])
-        f:SetSize(wpos["width"], wpos["height"])
+        f:SetSize(math.max(wpos["width"] or 0, MIN_W), math.max(wpos["height"] or 0, MIN_H))
       end
 
-      -- solid Dracula background with a purple border (was a see-through
-      -- dialog texture at half alpha)
-      f:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 2,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-      })
-      f:SetBackdropColor(addonData.util:rgb("bg", 0.95))
-      f:SetBackdropBorderColor(addonData.util:rgb("purple"))
-
-      --- Movable
+      --- movable (drag anywhere on the chrome) and resizable from the corner
       f:SetMovable(true)
+      f:SetResizable(true)
       f:SetClampedToScreen(true)
-      f:SetScript("OnMouseDown", function(this, button)
-        if button == "LeftButton" then
-          this:StartMoving()
-        end
-      end)
+      f:EnableMouse(true)
+      f:RegisterForDrag("LeftButton")
+      f:SetScript("OnDragStart", function(this) this:StartMoving() end)
 
       local movefunc = function()
         SteaSummonFrame:StopMovingOrSizing()
         SteaSummonFrame:SetUserPlaced(false)
-
         local p1, p2, p3, p4, p5 = SteaSummonFrame:GetPoint()
         local pos = {p1, p2, p3, p4, p5}
         pos["width"] = SteaSummonFrame:GetWidth()
         pos["height"] = SteaSummonFrame:GetHeight()
-
         addonData.settings:setWindowPos(pos)
-
         db("summon.display", pos[1], pos[2], pos[3], pos[4], pos[5], "width:", pos["width"], "height:", pos["height"])
-        if pos["height"] < 65 then
-          SteaSummonButtonFrame:Hide()
-          SteaSummonScrollFrame:Hide()
-        else
-          SteaSummonScrollFrame:Show()
-          SteaSummonButtonFrame:Show()
-        end
-
-        if pos["height"] < 42 then
-          if SteaSummonShardIcon then SteaSummonShardIcon:Hide() end
-        else
-          if SteaSummonShardIcon then SteaSummonShardIcon:Show() end
-        end
-
-        if pos["height"] < 28 then
-          if SteaSummonToButton then SteaSummonToButton:Hide() end
-        else
-          if SteaSummonToButton then SteaSummonToButton:Show() end
-        end
-
-        if pos["width"] < 100 or pos["height"] < 28 then
-          if SteaSummonContextMenuButton then SteaSummonContextMenuButton:Hide() end
-        else
-          if SteaSummonContextMenuButton then SteaSummonContextMenuButton:Show() end
-        end
-
-        if pos["width"] < 140 then
-          SteaSummonFrame.location:Hide()
-          SteaSummonFrame.destination:Hide()
-        else
-          SteaSummonFrame.location:Show()
-          SteaSummonFrame.destination:Show()
-        end
       end
+      f:SetScript("OnDragStop", movefunc)
 
-      f:SetScript("OnMouseUp", movefunc)
+      f:SetResizeBounds(MIN_W, MIN_H)
+      local rb = CreateFrame("Button", "SteaSummonResizeButton", f)
+      rb:SetPoint("BOTTOMRIGHT", -5, 5)
+      rb:SetSize(16, 16)
+      rb:SetFrameLevel(f:GetFrameLevel() + 20)
+      rb:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+      rb:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+      rb:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+      rb:SetScript("OnMouseDown", function(this, button)
+        if button == "LeftButton" then
+          f:StartSizing("BOTTOMRIGHT")
+        end
+      end)
+      rb:SetScript("OnMouseUp", movefunc)
 
-      --- SteaSummonScrollFrame
-      local sf = CreateFrame("ScrollFrame", "SteaSummonScrollFrame", SteaSummonFrame, "UIPanelScrollFrameTemplate")
-      sf:SetPoint("LEFT", 8, 0)
-      sf:SetPoint("RIGHT", -40, 0)
-      sf:SetPoint("TOP", 0, -84)
-      sf:SetPoint("BOTTOM", 0, 30)
-      sf:SetScale(0.5)
+      --- the queue list lives in the inset
+      local listParent = child(f, "Inset") or f
+      local sf = CreateFrame("ScrollFrame", "SteaSummonScrollFrame", listParent, "UIPanelScrollFrameTemplate")
+      sf:SetPoint("TOPLEFT", listParent, "TOPLEFT", 4, -4)
+      sf:SetPoint("BOTTOMRIGHT", listParent, "BOTTOMRIGHT", -27, 4)
 
-      addonData.buttonFrame = CreateFrame("Frame", "SteaSummonButtonFrame", SteaSummonFrame)
-      local x, y = sf:GetSize()
-      addonData.buttonFrame:SetSize(x-10, y)
+      addonData.buttonFrame = CreateFrame("Frame", "SteaSummonButtonFrame", sf)
+      addonData.buttonFrame:SetSize(330, 37 * 25 + 10)
       addonData.buttonFrame:SetScale(SteaSummonSave.listSize)
       sf:SetScrollChild(addonData.buttonFrame)
 
@@ -729,93 +729,77 @@ local summon = {
         self:createButton(i)
       end
 
-      --- Setup Next button
-      addonData.buttons[38].Button:SetPoint("TOPLEFT","SteaSummonFrame","TOPLEFT", -10, 10)
-      addonData.buttons[38].Button:SetText(L["Next"])
+      --- Next button: the secure cast button, keybind "CLICK SteaSummonButton38"
+      local nextBtn = addonData.buttons[38].Button
+      nextBtn:ClearAllPoints()
+      nextBtn:SetSize(30, 30)
+      nextBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -68)
+      nextBtn:SetText("")
+      nextBtn:SetScript("OnEnter", function(this)
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L["Next"])
+        local key = GetBindingKey("CLICK SteaSummonButton38:LeftButton")
+        GameTooltip:AddLine(key and ("Summon the next person in line (" .. key .. ")")
+                                 or "Summon the next person in line. Bind a key under Key Bindings > AddOns.", 1, 1, 1, true)
+        GameTooltip:Show()
+      end)
+      nextBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
       -- PreClick runs for the mouse and the keybind, but on both the down
       -- and up half of a press: act only on the half the secure cast uses
       -- (ActionButtonUseKeyDown), so announces go out once
-      addonData.buttons[38].Button:SetScript("PreClick", function(this, button, down)
+      nextBtn:SetScript("PreClick", function(this, button, down)
         if down ~= nil and down ~= (C_CVar.GetCVarBool("ActionButtonUseKeyDown") and true or false) then
           return
         end
         addonData.summon:nextClick(button)
       end)
 
-      --- Setup Summon Me button
-      addonData.buttons[39].Button:SetPoint("TOPLEFT","SteaSummonFrame","TOPLEFT", -10, 10)
-      addonData.buttons[39].Button:SetScript("OnClick", function()
+      --- the old portrait "Summon Me" button is replaced by a plain button
+      addonData.buttons[39].Button:Hide()
+      addonData.buttons[39].Button:SetScript("OnClick", nil)
+      f.meButton = CreateFrame("Button", "SteaSummonMeButton", f, "UIPanelButtonTemplate")
+      f.meButton:SetSize(104, 22)
+      if addonData.util:playerCanSummon() then
+        f.meButton:SetPoint("TOPLEFT", f, "TOPLEFT", 48, -72)
+      else
+        f.meButton:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -72)
+      end
+      f.meButton:SetText(L["Request Summon"])
+      f.meButton:SetScript("OnClick", function()
         if self:findWaitingPlayer(self.me) then
           self:resetMe()
         else
           self:addMe()
         end
       end)
-      addonData.buttons[39].Button:SetScript("OnEnter", function(this)
+      f.meButton:SetScript("OnEnter", function(this)
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
         GameTooltip:AddLine(L["Request/Reset Summon"])
         GameTooltip:Show()
       end)
-      addonData.buttons[39].Button:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-      end)
+      f.meButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      f.meButton:Hide()
 
-      --- Resizable
-      f:SetResizable(true)
-      f:SetResizeBounds(80, 25)
-      f:SetClampedToScreen(true)
-
-      local rb = CreateFrame("Button", "SteaSummonResizeButton", SteaSummonFrame)
-      rb:SetPoint("BOTTOMRIGHT", -6, 7)
-      rb:SetSize(8, 8)
-
-      rb:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
-      rb:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-      rb:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-
-      rb:SetScript("OnMouseDown", function(this, button)
-        if button == "LeftButton" then
-          f:StartSizing("BOTTOMRIGHT")
-          this:GetHighlightTexture():Hide() -- more noticeable
-        end
-      end)
-      rb:SetScript("OnMouseUp", movefunc)
-
+      --- raid information toggle: menu item + keybind only, no button on the window
       if addonData.util:playerCanSummon() then
         local summonTo = function()
           if not self.infoSend then
-            SteaSummonToButton:SetNormalTexture("Interface\\Buttons\\UI-GuildButton-MOTD-Up")
             addonData.gossip:destination(self.myZone, self.myLocation)
           else
-            SteaSummonToButton:SetNormalTexture("Interface\\Buttons\\UI-GuildButton-MOTD-Disabled")
             addonData.gossip:destination("", "")
           end
           self.infoSend = not self.infoSend
           addonData.gossip:nag(self.infoSend)
         end
-
-        --- summon to button
-        local place = CreateFrameCompat("Button", "SteaSummonToButton", SteaSummonFrame, "TruncatedButtonTemplate")
-        place:SetNormalTexture("Interface\\Buttons\\UI-GuildButton-MOTD-Disabled")
-        place:SetHighlightTexture("Interface\\Buttons\\UI-GuildButton-MOTD-Disabled")
-        place:SetPushedTexture("Interface\\Buttons\\UI-GuildButton-MOTD-Disabled")
-        place:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 42, -8)
-        place:SetSize(16,16)
+        local place = CreateFrame("Button", "SteaSummonToButton", f)
+        place:SetSize(1, 1)
+        place:SetPoint("TOPLEFT")
         place:RegisterForClicks()
-        place:SetScript("OnMouseUp", summonTo)
         place:SetScript("OnClick", summonTo)
-        place:SetScript("OnEnter", function(this)
-          GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine(L["Toggle Raid Information"])
-          GameTooltip:Show()
-        end)
-        place:SetScript("OnLeave", function()
-          GameTooltip:Hide()
-        end)
         place:Hide()
       end
 
-      --- invisible set/unset destination button button
+      --- destination line: click to set it to where you stand, click again to unset
       if addonData.util.playerCanSummon() then
         local function invisDest()
           if self.zone ~= "" then
@@ -825,51 +809,71 @@ local summon = {
           end
         end
 
-        local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", SteaSummonFrame, "UIPanelButtonTemplate")
-        -- covers the location + destination lines (click to set/unset)
-        invdest:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 66, -30)
-        invdest:SetPoint("RIGHT","SteaSummonFrame", "RIGHT", -100, 0)
-        invdest:SetHeight(32)
-        invdest:SetAlpha(0)
-        invdest:SetFrameLevel(2)
-        invdest:RegisterForClicks()
-        invdest:SetScript("OnMouseUp", invisDest)
+        local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", f)
+        invdest:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -44)
+        invdest:SetPoint("TOPRIGHT", f, "TOPRIGHT", -90, -44)
+        invdest:SetHeight(18)
+        invdest:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
         invdest:SetScript("OnClick", invisDest)
         invdest:SetScript("OnEnter", function(this)
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
           GameTooltip:AddLine(L["Set/Unset Destination"])
+          GameTooltip:AddLine("Click: summon to where you stand now. Click again to clear.", 1, 1, 1, true)
           GameTooltip:Show()
         end)
-        invdest:SetScript("OnLeave", function()
-          GameTooltip:Hide()
-        end)
+        invdest:SetScript("OnLeave", function() GameTooltip:Hide() end)
       end
 
-
-      --- shard count icon
+      --- shard count, right end of the destination line
       if self.isWarlock then
-        f.shards = CreateFrame("Frame", "SteaSummonShardIcon", SteaSummonFrame, BackdropTemplateMixin and "BackdropTemplate")
-        f.shards:SetBackdrop({
-          bgFile = "Interface\\ICONS\\INV_Misc_Gem_Amethyst_02",
-        })
-        f.shards:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 46, -32)
-        f.shards:SetSize(16,16)
-
-        f.shards.count = f.shards:CreateFontString(nil,"ARTWORK", nil, 7)
-        f.shards.count:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE") -- "BOLD" is not a valid flag; modern clients reject it
-        f.shards.count:SetPoint("CENTER","SteaSummonShardIcon", "CENTER", 6, -6)
+        f.shards = CreateFrame("Frame", "SteaSummonShardIcon", f)
+        f.shards:SetSize(16, 16)
+        f.shards:SetPoint("TOPRIGHT", f, "TOPRIGHT", -40, -45)
+        f.shards.icon = f.shards:CreateTexture(nil, "ARTWORK")
+        f.shards.icon:SetAllPoints()
+        f.shards.icon:SetTexture("Interface\\ICONS\\INV_Misc_Gem_Amethyst_02")
+        f.shards.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        f.shards.count = f.shards:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        f.shards.count:SetPoint("LEFT", f.shards, "RIGHT", 4, 0)
         f.shards.count:SetText("0")
-        f.shards.count:SetTextColor(1,1,1,1)
-        f.shards.count:Show()
+        f.shards:SetScript("OnEnter", function(this)
+          GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+          GameTooltip:AddLine("Soul shards in your bags")
+          GameTooltip:Show()
+        end)
+        f.shards:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        f.shards:EnableMouse(true)
         self.shards = self:shardCount()
       end
 
-      --- AFK toggle button
+      --- button row, right side: [AFK] [Ad] [Ledger] [Menu]  (Ledger comes from warlock/panel.lua)
+      f.context = CreateFrame("Button", "SteaSummonContextMenuButton", f, "UIPanelButtonTemplate")
+      f.context:SetSize(52, 22)
+      f.context:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -72)
+      f.context:SetText("Menu")
+      f.context:SetScript("OnClick", function() addonData.appbutton:menu() end)
+
       if addonData.util:playerCanSummon() then
-        -- top bar, right to left: [>] [Ad] [AFK] [$]  (the $ comes from warlock/panel.lua)
-        f.afkbutton = addonData.util:flatButton("SteaSummonAfkButton", SteaSummonFrame, 46, 20, L["AFK"], 12)
-        f.afkbutton:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -80, -6)
-        f.afkbutton:SetFrameLevel(3)
+        f.adbutton = CreateFrame("Button", "SteaSummonAdButton", f, "UIPanelButtonTemplate")
+        f.adbutton:SetSize(44, 22)
+        f.adbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -126, -72)
+        f.adbutton:SetText(L["Ad"])
+        f.adbutton:SetScript("OnClick", function()
+          addonData.chat:advertise()
+        end)
+        f.adbutton:SetScript("OnEnter", function(this)
+          GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+          GameTooltip:AddLine("Post the ad to: " .. ((SteaWarlockDB and SteaWarlockDB.adChannels) or "Trade"))
+          GameTooltip:AddLine("One click posts once to each channel. The button counts down the cooldown.", 1, 1, 1, true)
+          GameTooltip:Show()
+        end)
+        f.adbutton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        self:adButtonUpdate()
+
+        f.afkbutton = CreateFrame("Button", "SteaSummonAfkButton", f, "UIPanelButtonTemplate")
+        f.afkbutton:SetSize(44, 22)
+        f.afkbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -174, -72)
+        f.afkbutton:SetText(L["AFK"])
         f.afkbutton:SetScript("OnClick", function()
           addonData.summon:afkToggle()
         end)
@@ -878,68 +882,11 @@ local summon = {
           GameTooltip:AddLine(L["Toggle AFK: pauses auto invites and replies to asks"])
           GameTooltip:Show()
         end)
-        f.afkbutton:SetScript("OnLeave", function()
-          GameTooltip:Hide()
-        end)
-      end
-
-      --- trade advertisement button (shows cooldown countdown while waiting)
-      if addonData.util:playerCanSummon() then
-        f.adbutton = addonData.util:flatButton("SteaSummonAdButton", SteaSummonFrame, 46, 20, L["Ad"], 12)
-        f.adbutton:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -30, -6)
-        f.adbutton:SetFace("purple")
-        f.adbutton:SetTextTint("bg")
-        f.adbutton:SetFrameLevel(3)
-        f.adbutton:SetScript("OnClick", function()
-          addonData.chat:advertise()
-        end)
-        f.adbutton:SetScript("OnEnter", function(this)
-          GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine("Post the ad to: " .. ((SteaWarlockDB and SteaWarlockDB.adChannels) or "Trade"))
-          GameTooltip:Show()
-        end)
-        f.adbutton:SetScript("OnLeave", function()
-          GameTooltip:Hide()
-        end)
-        self:adButtonUpdate()
-      end
-
-      --- context menu
-      f.context = addonData.util:flatButton("SteaSummonContextMenuButton", SteaSummonFrame, 20, 20, ">", 12)
-      f.context:SetPoint("TOPRIGHT","SteaSummonFrame","TOPRIGHT", -6, -6)
-      f.context:SetTextTint("purple")
-      f.context:SetScript("OnClick", function() addonData.appbutton:menu() end)
-      f.context:SetFrameLevel(3)
-
-      --- raid lead button
-      local function relinquishLead()
-        addonData.raid:relinquish()
-      end
-
-      local lead = CreateFrameCompat("Button", "SteaSummonRelinquishRaidLeadButton", SteaSummonFrame, "TruncatedButtonTemplate")
-      lead:SetNormalTexture("Interface\\GROUPFRAME\\UI-Group-LeaderIcon")
-      lead:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 60, 4)
-      lead:SetSize(16,16)
-      lead:RegisterForClicks()
-      lead:SetScript("OnMouseUp", relinquishLead)
-      lead:SetScript("OnClick", relinquishLead)
-      lead:SetFrameLevel(102)
-      lead:SetScript("OnEnter", function(this)
-        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(L["Relinquish Raid Lead"])
-        GameTooltip:Show()
-      end)
-      lead:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-      end)
-      if not UnitIsGroupLeader("player") then
-        lead:Hide()
+        f.afkbutton:SetScript("OnLeave", function() GameTooltip:Hide() end)
       end
 
       --- Text items
       self:reConfigureFrames()
-
-      movefunc()
 
       db("summon.display","Screen Size (w/h):", GetScreenWidth(), GetScreenHeight() )
     end
@@ -1130,56 +1077,22 @@ local summon = {
           end
         end
       end -- skip visual updates
+    end -- rows
 
-      --- summonTo
-      if SteaSummonToButton then
-        if IsInGroup(LE_PARTY_CATEGORY_HOME) and SteaSummonFrame:GetHeight() >= 28 then
-          SteaSummonToButton:Show()
+    --- Summon me button: anyone grouped who is not at the destination
+    if SteaSummonFrame.meButton then
+      local me = SteaSummonFrame.meButton
+      if IsInGroup(LE_PARTY_CATEGORY_HOME) and not self:isAtDestination() then
+        if self:findWaitingPlayer(self.me) then
+          me:SetText(L["Reset Summon"])
         else
-          SteaSummonToButton:Hide()
+          me:SetText(L["Request Summon"])
         end
-      end
-    end
-
-    --- summon me button
-    if addonData.util:playerCanSummon() then
-      if addonData.buttons[38].Button:IsVisible() then
-        if not self.shrunk then
-          addonData.buttons[39].Button.shrink:Play()
-        end
+        me:Show()
       else
-        if self.shrunk then
-          addonData.buttons[39].Button.shrink:Play(true)
-        end
+        me:Hide()
       end
     end
-
-    -- when to hide, when to shrink/grow
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) then
-      if self:isAtDestination() then
-        if not self.shrunk then
-          addonData.buttons[39].Button.shrink:Play()
-        else
-          addonData.buttons[39].Button:Hide()
-        end
-      else
-        if self.shrunk then
-          addonData.buttons[39].Button:Show()
-          if not addonData.buttons[38].Button:IsVisible() then
-            addonData.buttons[39].Button.shrink:Play(true)
-          end
-        else
-          if addonData.util:playerCanSummon() and addonData.buttons[38].Button:IsVisible() then
-            addonData.buttons[39].Button.shrink:Play()
-          end
-        end
-      end
-    else
-      self.shrunk = true
-      addonData.buttons[39].Button:Hide()
-    end
-
-    SetPortraitTexture(addonData.buttons[39].Button.icon, "player")
 
     --- show summon window
     local show = false
@@ -1319,9 +1232,9 @@ local summon = {
   ---------------------------------
   createButton = function(_, i)
     -- Summon Button
-    local bw = 80
+    local bw = 96   -- name button width
     local bh = 25
-    local wpad = 30
+    local wpad = 38 -- X button (25) + gap
     local hpad = 5
 
     local parent = addonData.buttonFrame
@@ -1460,7 +1373,7 @@ local summon = {
       addonData.buttons[i].Cancel:SetWidth(bh)
       addonData.buttons[i].Cancel:SetHeight(bh)
       addonData.buttons[i].Cancel:SetText("X")
-      addonData.buttons[i].Cancel:SetPoint("TOPLEFT","SteaSummonButtonFrame","TOPLEFT", 10,-(((i-1)*bh)+hpad))
+      addonData.buttons[i].Cancel:SetPoint("TOPLEFT","SteaSummonButtonFrame","TOPLEFT", 8,-(((i-1)*bh)+hpad))
 
       --- Wait Time
       addonData.buttons[i].Time = CreateFrame("Frame", "SteaSummonWaitTime"..i, addonData.buttonFrame, BackdropTemplateMixin and "BackdropTemplate")
@@ -1550,15 +1463,13 @@ local summon = {
     wipe(self.afkReplied) -- each AFK session replies to each player once
     local btn = SteaSummonAfkButton
     if self.afk then
-      if btn and btn.SetFace then
-        btn:SetFace("red")
-        btn:SetTextTint("bg")
+      if btn then
+        btn:SetNormalFontObject("GameFontRed")
       end
       cprint(L["You are now AFK: auto invites are paused and asks get an AFK reply"])
     else
-      if btn and btn.SetFace then
-        btn:SetFace("line")
-        btn:SetTextTint("fg")
+      if btn then
+        btn:SetNormalFontObject("GameFontNormal")
       end
       cprint(L["You are no longer AFK"])
     end
@@ -1914,8 +1825,8 @@ local summon = {
           self:reConfigureFrames()
         end
 
-        SteaSummonFrame.destination:SetTextColor(0,1,0,.5)
-        SteaSummonFrame.location:SetTextColor(0,1,0,.5)
+        SteaSummonFrame.destination:SetTextColor(0.1, 1, 0.1)
+        SteaSummonFrame.location:SetTextColor(1, 1, 1)
       end
 
       if oldZone ~= self.myZone or oldLocation ~= self.myLocation then -- we changed location to destination
@@ -1926,8 +1837,8 @@ local summon = {
         if not SteaSummonFrame.location or not SteaSummonFrame.destination then
           self:reConfigureFrames()
         end
-        SteaSummonFrame.destination:SetTextColor(1,1,1,.5)
-        SteaSummonFrame.location:SetTextColor(0,1,0,.5)
+        SteaSummonFrame.destination:SetTextColor(1, 1, 1)
+        SteaSummonFrame.location:SetTextColor(1, 1, 1)
       end
 
       if self.zone ~= "" and self.location ~= "" then -- destination is set
@@ -1942,7 +1853,7 @@ local summon = {
     if SteaSummonFrame and oldZone ~= self.myZone or oldLocation ~= self.myLocation then
       local pat = {["%%zone"] = self.myZone, ["%%subzone"] = self.myLocation}
       local s = L["Location: %subzone, %zone"]
-      s = tstring(s, pat)
+      s = goldLabel(tstring(s, pat))
       SteaSummonFrame.location:SetText(s)
     end
   end,
@@ -1971,7 +1882,7 @@ local summon = {
 
         local pat = {["%%zone"] = self.zone, ["%%subzone"] = self.location}
         local s = L["Destination: %subzone, %zone"]
-        s = tstring(s, pat)
+        s = goldLabel(tstring(s, pat))
         SteaSummonFrame.destination:SetText(s)
       end
       if self:isAtDestination() then
@@ -1982,7 +1893,7 @@ local summon = {
         if not SteaSummonFrame.destination then
           self:reConfigureFrames()
         end
-        SteaSummonFrame.destination:SetText("")
+        SteaSummonFrame.destination:SetText(DESTINATION_UNSET)
       end
       self.show = nil
       addonData.raid:relinquish()

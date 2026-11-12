@@ -87,22 +87,19 @@ local function pageRole(parent)
   local desc = text(p, "GameFontHighlight", "fg", 0, -120, 420)
   local btns = {}
   for i, role in ipairs(ROLE_ORDER) do
-    local b = CreateFrame("Button", nil, p, "BackdropTemplate")
-    b:SetSize(132, 64)
-    b:SetPoint("TOPLEFT", (i - 1) * 144, -36)
-    b:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
-    b.label = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    b.label:SetPoint("CENTER")
-    b.label:SetText(ROLE_INFO[role].label)
+    local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
+    b:SetSize(136, 40)
+    b:SetPoint("TOPLEFT", (i - 1) * 148, -36)
+    b:SetNormalFontObject("GameFontNormalLarge")
+    b:SetHighlightFontObject("GameFontHighlightLarge")
+    b:SetText(ROLE_INFO[role].label)
     b:SetScript("OnClick", function() U.role = role; W.setRole(role); U:refresh() end)
     btns[role] = b
   end
   return { frame = p, refresh = function()
     for role, b in pairs(btns) do
-      local on = role == U.role
-      b:SetBackdropColor(W.rgb(on and "line" or "bg", 1))
-      b:SetBackdropBorderColor(W.rgb(on and "purple" or "comment"))
-      b.label:SetTextColor(W.rgb(on and "fg" or "comment"))
+      -- the chosen role stays lit (stock button highlight), the others are plain
+      if role == U.role then b:LockHighlight() else b:UnlockHighlight() end
     end
     desc:SetText(ROLE_INFO[U.role].desc .. "\n\n" .. W.hex("comment", "You can change this later with /sw role."))
   end }
@@ -254,29 +251,22 @@ end
 
 function U:build()
   if self.frame then return self.frame end
-  local f = CreateFrame("Frame", "SummonSirSetup", UIParent, "BackdropTemplate")
-  f:SetSize(480, 340)
+  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 380, "SummonSir setup", "Interface/ICONS/Spell_Shadow_Twilight")
   f:SetPoint("CENTER")
   f:SetFrameStrata("DIALOG")
-  f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
-  f:SetBackdropColor(W.rgb("bg", 0.97))
-  f:SetBackdropBorderColor(W.rgb("purple"))
-  f:SetMovable(true)
-  f:EnableMouse(true)
-  f:RegisterForDrag("LeftButton")
-  f:SetScript("OnDragStart", f.StartMoving)
-  f:SetScript("OnDragStop", f.StopMovingOrSizing)
-  f:SetClampedToScreen(true)
   table.insert(UISpecialFrames, "SummonSirSetup")
+  if W.child(f, "Inset") then
+    -- the inset frames the page; buttons sit below it
+    f.Inset:ClearAllPoints()
+    f.Inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -48)
+    f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 44)
+  end
 
-  local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-  close:SetPoint("TOPRIGHT", 2, 2)
-
-  f.steps = text(f, "GameFontNormalSmall", "comment", 20, -14)
+  f.steps = text(f, "GameFontNormalSmall", "comment", 14, -30)
 
   local content = CreateFrame("Frame", nil, f)
-  content:SetPoint("TOPLEFT", 24, -40)
-  content:SetPoint("BOTTOMRIGHT", -24, 50)
+  content:SetPoint("TOPLEFT", 28, -64)
+  content:SetPoint("BOTTOMRIGHT", -28, 60)
   self.pages.welcome = pageWelcome(content)
   self.pages.role = pageRole(content)
   self.pages.warlock = pageWarlock(content)
@@ -285,13 +275,13 @@ function U:build()
   self.pages.done = pageDone(content)
 
   f.back = button(f, "Back", 90, function() U:go(U.page - 1) end)
-  f.back:SetPoint("BOTTOMLEFT", 20, 16)
+  f.back:SetPoint("BOTTOMLEFT", 12, 12)
   f.next = button(f, "Next", 110, function()
     if U.page >= #U:currentPages() then U:finish() else U:go(U.page + 1) end
   end)
-  f.next:SetPoint("BOTTOMRIGHT", -20, 16)
+  f.next:SetPoint("BOTTOMRIGHT", -12, 12)
   f.skip = button(f, "Skip setup", 100, function() U:finish() end)
-  f.skip:SetPoint("BOTTOM", 0, 16)
+  f.skip:SetPoint("BOTTOM", 0, 12)
 
   -- closing early counts as done: /sw setup brings it back
   f:SetScript("OnHide", function() charState().setupDone = true end)

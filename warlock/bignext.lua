@@ -35,9 +35,7 @@ function N:build()
   local f = CreateFrame("Frame", "SummonSirNextFrame", UIParent, "BackdropTemplate")
   f:SetSize(236, 92)
   f:SetFrameStrata("MEDIUM")
-  f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
-  f:SetBackdropColor(W.rgb("bg", 0.92))
-  f:SetBackdropBorderColor(W.rgb("purple"))
+  W.stockBackdrop(f, nil, 0.9)
   f:SetMovable(true)
   f:EnableMouse(true)
   f:RegisterForDrag("LeftButton")
@@ -50,13 +48,12 @@ function N:build()
   end)
 
   f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  f.title:SetPoint("TOPLEFT", 8, -5)
-  f.title:SetText("SummonSir  (drag here to move)")
-  f.title:SetTextColor(W.rgb("comment"))
+  f.title:SetPoint("TOPLEFT", 10, -7)
+  f.title:SetText("SummonSir")
 
   f.clear = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
   f.clear:SetSize(54, 16)
-  f.clear:SetPoint("TOPRIGHT", -6, -3)
+  f.clear:SetPoint("TOPRIGHT", -8, -5)
   f.clear:SetText("Clear")
   f.clear:SetNormalFontObject("GameFontNormalSmall")
   f.clear:SetScript("OnClick", function() addonData.summon:clearList() end) -- asks first
@@ -69,17 +66,21 @@ function N:build()
 
   -- the secure cast button
   local b = CreateFrame("Button", "SummonSirNextButton", f, "SecureActionButtonTemplate")
-  b:SetPoint("BOTTOMLEFT", 6, 6)
-  b:SetPoint("BOTTOMRIGHT", -6, 6)
+  b:SetPoint("BOTTOMLEFT", 8, 8)
+  b:SetPoint("BOTTOMRIGHT", -8, 8)
   b:SetHeight(64)
   b:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
   b:SetAttribute("type", "macro")
   b:SetAttribute("macrotext", "")
 
-  b.bg = b:CreateTexture(nil, "BACKGROUND")
-  b.bg:SetAllPoints()
-  b.bg:SetColorTexture(W.rgb("line", 1))
-  b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+  -- the standard panel button art, stretched (same textures the queue rows use)
+  b:SetNormalTexture("Interface/Buttons/UI-Panel-Button-Up")
+  b:SetHighlightTexture("Interface/Buttons/UI-Panel-Button-Highlight", "ADD")
+  b:SetPushedTexture("Interface/Buttons/UI-Panel-Button-Down")
+  b:SetDisabledTexture("Interface/Buttons/UI-Panel-Button-Disabled")
+  for _, tex in ipairs({ b:GetNormalTexture(), b:GetHighlightTexture(), b:GetPushedTexture(), b:GetDisabledTexture() }) do
+    if tex then tex:SetTexCoord(0, 0.625, 0, 0.6875) end
+  end
 
   b.icon = b:CreateTexture(nil, "ARTWORK")
   b.icon:SetSize(56, 56)
@@ -159,12 +160,18 @@ function N:refresh()
     b.line1:SetText(W.hex("orange", "Life Tap"))
     b.line2:SetText("Low mana. Next: " .. nextRec[1])
   else
-    b.line1:SetText(W.hex("purple", "SUMMON NEXT"))
+    b.line1:SetText("SUMMON NEXT")
     b.line2:SetText(nextRec[1])
   end
   b.line3:SetText(W.hex("comment", queued .. " in queue   ")
     .. W.hex(shards == 0 and "red" or (shards < 5 and "orange" or "comment"), shards .. " shards"))
-  f:SetBackdropBorderColor(W.rgb(nextRec and (shards > 0 and "purple" or "red") or "comment"))
+  if nextRec and shards == 0 then
+    f:SetBackdropBorderColor(W.rgb("red"))
+  elseif nextRec then
+    f:SetBackdropBorderColor(1, 1, 1)
+  else
+    f:SetBackdropBorderColor(W.rgb("comment"))
+  end
   b:SetAlpha(nextRec and 1 or 0.6)
 end
 

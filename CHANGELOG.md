@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0-w11 (2026-11-11): stock Forever look, usability pass
+
+Travis's call after seeing w10 in game: drop the custom palette and use the game's own styling. Every window now sits on the stock templates.
+
+### Summon window
+- Built on the standard window template: title bar ("SummonSir"), Ritual of Summoning icon in the portrait circle, close button, inset for the queue, resize grip. Default size 400 x 340, never smaller than 360 x 180.
+- Header is three fixed rows that no longer run into the queue: **Location** with the warlock/clicker counts on the right, **Destination** (click the line to set it to where you stand, click again to clear; shows "not set" with a hint until then) with the shard count on the right, then a button row.
+- Button row: **Next** (the keybound cast button, with its key in the tooltip), **Summon me** (replaces the floating portrait button; shows for anyone grouped who is not at the destination, and reads "Reset Summon" once you are in line), then **AFK**, **Ad**, **Ledger** (was `$`) and **Menu** (was `>`), all standard buttons with tooltips.
+- Queue rows are no longer pre-shrunk to half size. The list scale setting resets to 1.0 once; the name column is wider and the X no longer overlaps it.
+- Removed from the window: the tiny raid-info and raid-lead icons (both stay in the Menu and on the keybind).
+
+### Other windows
+- Ledger, setup: standard windows with title bar, portrait icon and inset.
+- Big Summon Next, portal banner, advertiser window: the standard tooltip-style backdrop; the big button uses the normal button art.
+- Setup role choice uses standard buttons; the chosen one stays lit.
+- Color names in the code now map to the game's standard font colors (gold labels, white text, gray hints, green/red/orange status, Warlock class color for headings).
+
 ## 1.0.0-w10 (2026-11-11): X and Clear work from the warlock, summon window restyled
 
 ### Fixes
