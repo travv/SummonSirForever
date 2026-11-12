@@ -230,6 +230,7 @@ local chat = {
     },
     adtext = {
       order = 30,
+      hidden = function() return addonData.ads ~= nil end, -- set on the Summon service page instead
       name = L["Trade advertisement text"],
       desc = L["a sentence advertising your summons, sent to the Trade channel"],
       type = "input",
@@ -256,6 +257,7 @@ local chat = {
     },
     adcooldown = {
       order = 31,
+      hidden = function() return addonData.ads ~= nil end, -- set on the Summon service page instead
       type = "range",
       name = L["Ad cooldown (minutes)"],
       desc = L["Minimum wait between Trade ads, to keep from annoying the community"],
@@ -880,7 +882,7 @@ end
 
 function optionsgui:init()
   local me = UnitName("player")
-  local name = "SteaSummon (" .. me .. ")"
+  local name = "SummonSirForever (" .. me .. ")"
   optionsgui.showID = name
 
   LibStub("AceConfig-3.0"):RegisterOptionsTable(name, optionsgui.options, "ss")
@@ -902,6 +904,10 @@ function optionsgui:init()
   LibStub("AceConfigDialog-3.0"):AddToBlizOptions("SteaSummonAlts", L["Alt Support"], name)
   LibStub("AceConfigDialog-3.0"):AddToBlizOptions("SteaSummonRaid", L["Raid Management"], name)
   LibStub("AceConfigDialog-3.0"):AddToBlizOptions("SteaSummonAdv", L["Advanced"], name)
+  -- the Summon service page (warlock/options.lua) goes after the original pages
+  if addonData.serviceOptions then
+    addonData.serviceOptions:register(name)
+  end
 end
 
 

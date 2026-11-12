@@ -6,7 +6,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w2). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w3). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
@@ -70,6 +70,9 @@ Each window gets one role. Set it with `/sw role <role>`.
 - Several Forever API fixes: bag APIs, chat sends, group checks.
 - Summon phrases ignore case and punctuation ("123!", "Summon Plz").
 
+### Settings page
+Every setting below is also on a **Summon service** page in **Settings > AddOns > SummonSirForever**. Open it with `/sw options` or the **Options** button on the ledger panel. The slash commands are there for when you'd rather type.
+
 ### Quick setup
 **Warlock (2 min)**
 1. `/sw dest tb` sets where you summon to (`/sw dest list` shows all presets).
@@ -89,6 +92,7 @@ Each window gets one role. Set it with `/sw role <role>`.
 | Command | Does |
 |---|---|
 | `/sw` | Ledger panel |
+| `/sw options` | Summon service settings page |
 | `/sw role warlock\|clicker\|advertiser` | Set this window's role |
 | `/sw dest <name>` / `dest list` / `dest clear` | Destination for ads and replies |
 | `/sw price <amount> [dest]` | Price, e.g. `80s`, `1g`, `1g50s` |

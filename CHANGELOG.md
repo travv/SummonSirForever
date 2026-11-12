@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0-w3 (2026-11-11): settings page
+
+- New **Summon service** page in Settings > AddOns > SummonSirForever. It holds every `/sw` setting:
+  - role and destination
+  - prices, including per-destination ones
+  - the three reply texts and the auto-reply switch
+  - never-paid timing, auto-block and block length
+  - block, unblock and mark-paid
+  - ad channel, ad text, ad cooldown and the warlock name for ads, with a live preview of the ad text
+  - clicker sound, a test banner and an Interact key check
+  - erasing the ledger history
+- Open it with `/sw options` or the Options button on the ledger panel.
+- The settings category is now named "SummonSirForever (character)". The old Trade-ad text and cooldown fields are hidden, since ads are set on the new page.
+
 ## 1.0.0-w2 (2026-11-11): renamed to SummonSirForever
 
 - The addon folder, TOC and title are now **SummonSirForever** (repo: github.com/travv/SummonSirForever). Delete any old `SteaSummonForever` folder: the two can't be installed together.

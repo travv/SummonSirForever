@@ -41,6 +41,12 @@ function UI:build()
   f.close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
   f.close:SetPoint("TOPRIGHT", 2, 2)
 
+  f.opts = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  f.opts:SetSize(70, 20)
+  f.opts:SetPoint("TOPRIGHT", -30, -8)
+  f.opts:SetText("Options")
+  f.opts:SetScript("OnClick", function() f:Hide(); W.options:open() end)
+
   f.body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   f.body:SetPoint("TOPLEFT", 12, -34)
   f.body:SetPoint("RIGHT", -12, 0)
