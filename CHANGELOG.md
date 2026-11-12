@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-w25 (2026-11-12): shorter cast whisper
+
+- The whisper sent when you cast on someone is just "Summoning you now, sir."
+
 ## 1.0.0-w24 (2026-11-12): no first reply by default
 
 - **The warlock no longer whispers back when someone asks for a summon.** The group invite that pops on their screen is the notification, and the ad already quoted the price. The same goes for the advertiser's "inv" invites. Replies still go out when nothing else happens: wrong destination, queue full, already here, AFK.

@@ -36,7 +36,7 @@ summonWords[24] ="[SteaSummon] 123"
 -- upgraded at login; anything you typed yourself is left alone.
 local FLAVOR = {
   raidchat = "Summoning %p.",
-  whisperchat = "Summoning you now, sir. Accept it when it pops.",
+  whisperchat = "Summoning you now, sir.",
   saychat = "Summoning %p. Click the portal, please.",
   raidinfo = "Summons are open, sir. Type %t for a summon, -%t to cancel, or %t again if one fails.",
   clickersnag = "Need more clickers at %l, %z. Come help, sir.",
@@ -50,6 +50,7 @@ local OLD_FLAVOR = {
   raidchat = "Now summoning Sir %p!",
   whisperchat = "Sit back and relax! The summon is on the way, sir :)",
   whisperchatW20 = "Summon's on the way, sir. Accept it when it pops.",
+  whisperchatW24 = "Summoning you now, sir. Accept it when it pops.",
   saychat = "Summoning Sir %p! Click the portal please!",
   raidinfo = "Summons are open, sir! Type %t for a summon, -%t to cancel, or %t again if one fails!",
   clickersnag = "Need more clickers at %l, %z! Come help, sir!",
@@ -158,7 +159,7 @@ settings = {
     }
     for k, v in pairs(FLAVOR) do
       if SteaSummonSave[k] == nil or SteaSummonSave[k] == STOCK[k] or SteaSummonSave[k] == OLD_FLAVOR[k]
-         or (k == "whisperchat" and SteaSummonSave[k] == OLD_FLAVOR.whisperchatW20) then
+         or (k == "whisperchat" and (SteaSummonSave[k] == OLD_FLAVOR.whisperchatW20 or SteaSummonSave[k] == OLD_FLAVOR.whisperchatW24)) then
         SteaSummonSave[k] = v
       end
     end
