@@ -37,11 +37,19 @@ The window opens on the **Setup** tab the first time each character logs in. Pic
 | **Clicker** | anyone at the destination to click the portal | sound plays in the background (the cue), the optional Interact key |
 | **Advertiser** | a character parked in a city | which channels the ad posts to, one checkbox each |
 
-<p align="center"><img src="./img/setup-clicker.png" alt="Clicker setup page" width="700"/></p>
+<table align="center">
+  <tr>
+    <td align="center"><img src="./img/setup-warlock.png" width="290" alt="Warlock setup"/><br><sub>Warlock</sub></td>
+    <td align="center"><img src="./img/setup-clicker.png" width="290" alt="Clicker setup"/><br><sub>Clicker</sub></td>
+    <td align="center"><img src="./img/setup-advertiser.png" width="290" alt="Advertiser setup"/><br><sub>Advertiser</sub></td>
+  </tr>
+</table>
 
 Rerun it any time from the Setup tab or `/ssf setup`.
 
 ## How a sale works
+<p align="center"><i>[placeholder: Queue tab with people in line, NEXT marker, Casting / Portal up / Arrived status words]</i></p>
+
 1. A player whispers the warlock "123", "summon sm" or "wtb sumon pls" (typos are fine). They get a group invite, nothing else: the invite is the notification and your ad already quoted the price. People who ask for the wrong place get a short reply instead.
 2. When they join they appear on the **Queue** tab. The first person waiting is marked **NEXT** in green.
 3. Press your **Summon Next** key, the Next button, or the big Summon Next button. They get "Summoning you now, sir.", the row reads **Casting**, and every clicker window plays the raid-warning sound and shows a **PORTAL UP** banner with a 30 second bar.
@@ -52,7 +60,7 @@ Rerun it any time from the Setup tab or `/ssf setup`.
 
 **Queue.** Header: where you stand, where you summon to (click to pin where you stand), your soul shards, `Clickers 2   Raid 7/40` (orange near 35, red at 39: invites fail at 40). Buttons: Next, AFK, Ad, Menu, every one with a tooltip. Rows: X removes (no charge), click a name to summon that person now, right-click to move, remove, block or whisper. Status words: Waiting, Casting, Portal up, Arrived, Declined, Offline, Dead.
 
-**Ledger.** The session in large type: summons, gold, gold per hour, percent paid. **Open tabs** lists everyone who arrived and has not paid, with **Paid** (mail, a friend paid, a comp) and **Block** buttons; red past the grace time. Then 7 days and 8 weeks of history. **Options** opens the settings.
+**Ledger.** <i>[placeholder: ledger after a session, with gold per hour and an open tab]</i> The session in large type: summons, gold, gold per hour, percent paid. **Open tabs** lists everyone who arrived and has not paid, with **Paid** (mail, a friend paid, a comp) and **Block** buttons; red past the grace time. Then 7 days and 8 weeks of history. **Options** opens the settings.
 
 **Ads.** One checkbox per chat channel this character has joined (default General, Trade, Services, LookingForGroup). The ad as it will read, then **Post ad**: once to each checked channel, then a cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the destination and price have synced.
 
@@ -61,6 +69,8 @@ Default ad: `WTS summon {dest} {price}. {blurb} PST "inv" {spell}`. `{blurb}` fi
 **Setup.** The walkthrough above. Leaving the tab counts as done.
 
 ## Also on screen
+<p align="center"><i>[placeholder: the big Summon Next button, and the PORTAL UP banner on a clicker]</i></p>
+
 - **Big Summon Next button** (warlock): who is next, how many in line, your shards, your key. Green while casting, red when out of shards, "Life Tap" when low on mana.
 - **PORTAL UP banner** (clickers): the raid-warning sound is the cue to look at that window. Turn on "hear it in the background" on the Setup tab so it plays while another window has focus.
 - **Chat:** one "SummonSir:" line per payment, drop and ignored (blocked) whisper. A ping when someone joins the queue and the coin sound on payment, both toggles.
