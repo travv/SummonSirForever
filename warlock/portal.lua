@@ -67,6 +67,22 @@ function P:buildBanner()
   f.who:SetPoint("BOTTOMRIGHT", -10, 6)
   f.who:SetTextColor(W.rgb("comment"))
 
+  -- a thin bar that drains over the 30 s the portal can stay up, so a
+  -- clicker who looks up late can see how much time is left
+  f.bar = CreateFrame("StatusBar", nil, f)
+  f.bar:SetPoint("BOTTOMLEFT", 10, 7)
+  f.bar:SetPoint("RIGHT", f.who, "LEFT", -12, 0)
+  f.bar:SetHeight(4)
+  f.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+  f.bar:SetStatusBarColor(W.rgb("green"))
+  f.bar:SetMinMaxValues(0, 1)
+  f.bar:SetValue(1)
+  f:SetScript("OnUpdate", function(this)
+    if P.upSince then
+      this.bar:SetValue(math.max(0, 1 - (GetTime() - P.upSince) / P.SAFETY_HIDE))
+    end
+  end)
+
   f:EnableMouse(false) -- never steals a click meant for the portal
   f:Hide()
   self.banner = f
@@ -81,12 +97,13 @@ function P:showBanner(target, dest)
     f.sub:SetText("press " .. W.hex("yellow", key) .. " to click it")
     f:SetBackdropBorderColor(W.rgb("green"))
   else
-    f.sub:SetText(W.hex("red", "bind \"Interact With Target\" in Key Bindings"))
+    f.sub:SetText(W.hex("red", "bind it: Key Bindings > Targeting > Interact With Target"))
     f:SetBackdropBorderColor(W.rgb("orange"))
   end
   local who = target ~= "" and ("summoning " .. target) or ""
   if dest and dest ~= "" then who = who .. " to " .. dest end
   f.who:SetText(who)
+  f.bar:SetValue(1)
   f:Show()
   self.upSince = GetTime()
   if W.db.alertSound then

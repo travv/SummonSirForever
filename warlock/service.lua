@@ -310,6 +310,7 @@ function V:init()
   end)
   W.on("QUEUE_ADDED", function(name)
     if W.role() == "warlock" then
+      W.playSound("IG_PLAYER_INVITE", 880, "soundJoin") -- a customer landed in the queue
       C_Timer.After(0.5, function() V:sendPosition(name, 0) end)
     end
   end)

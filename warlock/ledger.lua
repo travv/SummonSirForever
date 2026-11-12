@@ -67,6 +67,15 @@ function L:recordPayment(name, amount, now)
   if blocked and e.reason == "never paid" then
     W.blocklist:remove(name)
   end
+  -- one line and the coin sound on every settle path (timer or PLAYER_MONEY)
+  local note = ""
+  if not s then
+    note = W.hex("comment", "(tip: no open summon)")
+  elseif s.price and amount < s.price then
+    note = W.hex("orange", "(short by " .. W.fmtMoney(s.price - amount) .. ")")
+  end
+  W.print(W.hex("green", "paid:"), name, W.fmtMoney(amount), note)
+  W.playSound("LOOT_WINDOW_COIN_SOUND", 120, "soundPaid")
   W.fire("LEDGER_CHANGED")
   return p, s
 end
@@ -165,10 +174,7 @@ function L:init()
     C_Timer.After(L.CONFIRM_SECONDS, function() L:tradeSettle(GetMoney()) end)
   end)
   W.on("PLAYER_MONEY", function()
-    if L.trade and L.trade.closed then
-      local p = L:tradeSettle(GetMoney())
-      if p then W.print("paid:", p.name, W.fmtMoney(p.amount)) end
-    end
+    if L.trade and L.trade.closed then L:tradeSettle(GetMoney()) end
   end)
 
   W.on("SUMMON_CAST", function(name)

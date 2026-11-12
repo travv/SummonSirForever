@@ -102,6 +102,8 @@ W.DEFAULTS = {
   autoBlock = true,       -- block never-paid customers automatically
   autoBlockHours = 24,
   alertSound = true,      -- clicker banner plays a sound
+  soundJoin = true,       -- warlock: ping when someone lands in the queue
+  soundPaid = true,       -- coin sound when a payment is recorded
   adChannel = "Services",  -- (pre-w9 single channel; adChannels replaces it)
   adChannels = "1, 2, 8",  -- channel numbers or names; one click posts the ad to each
   adTemplate = "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
@@ -212,6 +214,14 @@ end
 
 function W.print(...)
   print(W.hex("purple", "SummonSir:"), ...)
+end
+
+-- a stock UI sound, by SOUNDKIT name with the numeric fallback, gated by a
+-- W.db toggle (nil toggle = always)
+function W.playSound(kitName, fallbackId, setting)
+  if setting and W.db and W.db[setting] == false then return false end
+  pcall(PlaySound, (SOUNDKIT and SOUNDKIT[kitName]) or fallbackId, "Master")
+  return true
 end
 
 ---------------------------------

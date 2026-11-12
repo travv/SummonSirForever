@@ -8,6 +8,7 @@ local _, addonData = ...
 local W = addonData.W
 
 local N = { frame = nil, button = nil }
+local NEXT_BINDING = "CLICK SteaSummonButton38:LeftButton"
 
 local function next38()
   return addonData.buttons and addonData.buttons[38] and addonData.buttons[38].Button
@@ -49,7 +50,7 @@ function N:build()
 
   f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   f.title:SetPoint("TOPLEFT", 10, -7)
-  f.title:SetText("SummonSir")
+  f.title:SetText("Next up")
 
   f.clear = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
   f.clear:SetSize(54, 16)
@@ -114,6 +115,16 @@ function N:build()
     end
   end)
 
+  b:SetScript("OnEnter", function(this)
+    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    GameTooltip:AddLine("Summon Next")
+    local key = GetBindingKey(NEXT_BINDING)
+    GameTooltip:AddLine("Same as your Summon Next key" .. (key and (" (" .. key .. ")") or "")
+      .. ": casts Ritual of Summoning on the person marked NEXT and announces them. Low on mana? It Life Taps instead.", 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
   self.frame, self.button = f, b
   self:place()
   f:Hide()
@@ -137,14 +148,19 @@ end
 function N:refresh()
   local f, b = self.frame, self.button
   if not f then return end
+  -- clickers and the advertiser never show it: hide once and do no work
+  local want = self:wanted()
+  if not want then
+    if f:IsShown() and not InCombatLockdown() then f:Hide() end
+    return
+  end
   local S = addonData.summon
   local nextRec = S and S.firstRequested and S:firstRequested()
   local queued = S and S.numwaiting or 0
   local shards = W.countShards()
 
   if not InCombatLockdown() then
-    local want = self:wanted()
-    if want and not f:IsShown() then f:Show() elseif not want and f:IsShown() then f:Hide() end
+    if not f:IsShown() then f:Show() end
     local nb = next38()
     local macro = (nextRec and nb and nb:GetAttribute("macrotext")) or ""
     if b:GetAttribute("macrotext") ~= macro then b:SetAttribute("macrotext", macro) end
@@ -163,9 +179,13 @@ function N:refresh()
     b.line1:SetText("SUMMON NEXT")
     b.line2:SetText(nextRec[1])
   end
+  local key = GetBindingKey(NEXT_BINDING)
   b.line3:SetText(W.hex("comment", queued .. " in queue   ")
-    .. W.hex(shards == 0 and "red" or (shards < 5 and "orange" or "comment"), shards .. " shards"))
-  if nextRec and shards == 0 then
+    .. W.hex(shards == 0 and "red" or (shards < 5 and "orange" or "comment"), shards .. " shards")
+    .. (key and W.hex("comment", "   key ") .. W.hex("yellow", key) or ""))
+  if S and S.isCasting then
+    f:SetBackdropBorderColor(W.rgb("green"))
+  elseif nextRec and shards == 0 then
     f:SetBackdropBorderColor(W.rgb("red"))
   elseif nextRec then
     f:SetBackdropBorderColor(1, 1, 1)

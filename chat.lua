@@ -198,6 +198,11 @@ local chat = {
       return
     end
 
+    if addonData.ads and addonData.ads.synced and not addonData.ads:synced() then
+      cprint("Ad not sent: not synced with the main warlock yet (group with them, or /sw lock <name>).")
+      return
+    end
+
     local trigphrase = SteaSummonSave.summonWords[1] or ""
     msg = tstring(msg, {["%%l"] = GetMinimapZoneText(), ["%%z"] = GetZoneText(), ["%%t"] = trigphrase})
     for _, chanId in ipairs(targets) do
@@ -205,6 +210,16 @@ local chat = {
     end
     SteaSummonSave.lastAdTime = time()
     addonData.summon:adButtonUpdate()
+    -- say where it went, by channel name, and what was skipped
+    if addonData.ads then
+      local posted, skipped = {}, {}
+      for _, c in ipairs(addonData.ads:channels()) do
+        if c.id then table.insert(posted, c.name or tostring(c.want)) else table.insert(skipped, tostring(c.want)) end
+      end
+      local line = "Ad posted to " .. table.concat(posted, ", ")
+      if #skipped > 0 then line = line .. "  |cffff8040(not joined: " .. table.concat(skipped, ", ") .. ")|r" end
+      cprint(line)
+    end
   end,
 
   sendChat = function(_, msg, channel, channel2, to)

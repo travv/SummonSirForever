@@ -112,28 +112,49 @@ function A:build()
   f.preview:SetJustifyH("LEFT")
 
   f.button = CreateFrame("Button", "SteaWarlockAdButton", f, "UIPanelButtonTemplate")
-  f.button:SetSize(120, 22)
+  f.button:SetSize(140, 22)
   f.button:SetPoint("BOTTOM", 0, 8)
   f.button:SetScript("OnClick", function()
     addonData.chat:advertise() -- one post per click
     A:refresh()
   end)
+  f.button:SetScript("OnEnter", function(this)
+    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    GameTooltip:AddLine("Post ad")
+    GameTooltip:AddLine("Channels: " .. A:channelSummary(), 1, 1, 1, true)
+    GameTooltip:AddLine("One click posts the ad once to each channel, then counts down " .. tostring(SteaSummonSave and SteaSummonSave.adCooldown or 5)
+      .. " minutes. Nothing posts on its own.", 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  f.button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
   f:Hide()
   self.frame = f
   return f
 end
 
+-- the advertiser's ad is only worth posting once the warlock has told it
+-- where and for how much (otherwise it would read "WTS summon ? 1g")
+function A:synced()
+  if W.role() ~= "advertiser" then return true end
+  local age = W.db.remoteAt and (W.now() - W.db.remoteAt)
+  return (age and age < 120 and W.destName() ~= "?") and true or false
+end
+
 function A:refresh()
   local f = self.frame
   if not f or not f:IsShown() then return end
-  local _, chanName = self:channel()
-  local synced = W.db.remoteAt and (W.now() - W.db.remoteAt) < 120
-  f.label:SetText("Ad to " .. self:channelSummary()
-    .. (synced and "" or W.hex("orange", "   (not synced with the warlock)")))
+  local synced = self:synced()
+  f.label:SetText("Ad to " .. self:channelSummary())
   f.preview:SetText(self:text())
+  -- the window grows with the ad text instead of spilling past the border
+  local textH = f.preview:GetStringHeight() or 12
+  f:SetHeight(math.max(84, 22 + textH + 44))
   local ready, remaining = addonData.chat:adReady()
-  if ready then
+  if not synced then
+    f.button:SetText("Waiting for warlock")
+    f.button:Disable()
+  elseif ready then
     f.button:SetText("Post ad")
     f.button:Enable()
   else

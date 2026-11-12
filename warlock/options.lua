@@ -376,12 +376,23 @@ function O:build()
 
       ---------------------------------------------------------------- clicker alert
       clickGroup = {
-        order = 60, type = "group", inline = true, name = "Clicker alert",
+        order = 60, type = "group", inline = true, name = "Alerts and sounds",
         args = {
           sound = {
-            order = 1, type = "toggle", name = "Play a sound",
+            order = 1, type = "toggle", name = "PORTAL UP sound (clicker)",
+            desc = "Plays with the banner when the warlock starts a summon.",
             get = function() return db().alertSound end,
             set = function(_, v) db().alertSound = v end,
+          },
+          soundJoin = {
+            order = 1.1, type = "toggle", name = "Ping when someone joins the queue (warlock)",
+            get = function() return db().soundJoin ~= false end,
+            set = function(_, v) db().soundJoin = v end,
+          },
+          soundPaid = {
+            order = 1.2, type = "toggle", name = "Coin sound when a payment lands",
+            get = function() return db().soundPaid ~= false end,
+            set = function(_, v) db().soundPaid = v end,
           },
           background = {
             order = 1.5, type = "toggle", name = "Hear it in the background", width = "full",

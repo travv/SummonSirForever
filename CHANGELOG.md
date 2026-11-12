@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-w15 (2026-11-12): the side panels read at a glance
+
+- **Ledger panel leads with the number that matters:** a large "12 summons   11g 50s   23g/hr   92% paid" headline under "This session (1h12m)". The history (7 days, weeks) scrolls instead of clipping once there is a week of data; the role / destination / price / shards line moved to the bottom, dimmed.
+- **Open tabs replace the never-paid list.** Everyone who arrived and has not paid shows up right away ("Summ Bert  arrived 2m ago, owes 1g") with Paid and Block buttons, so a mail payment or a comp can be marked at once instead of after the 10-minute flag. Past the grace time the row turns red and reads "never paid". Flagged customers stay listed until they pay.
+- **Every payment prints one green "paid:" line and plays the coin sound,** on both settle paths (the 2 s timer path printed nothing before). A short payment says by how much; gold with no open summon says "tip".
+- **Big Summon Next button:** titled "Next up", shows your keybind on the bottom line, turns green while casting, and has a tooltip. Clickers and the advertiser no longer pay for its half-second refresh.
+- **PORTAL UP banner** has a thin green bar that drains over the 30 s the portal can stay up. The no-key hint names the exact menu path.
+- **Ad window** reads "Waiting for warlock" and stays disabled until the advertiser has synced (it would have posted "WTS summon ? 1g"); the window grows with a long ad instead of spilling; the button has a tooltip. After a post, chat says "Ad posted to General, Trade, Services" and lists channels you have not joined.
+- **Sounds for a four-window operator** (settings group renamed "Alerts and sounds"): a ping on the warlock when someone lands in the queue and the coin sound on payment, both on by default and switchable.
+- The Ledger button's tooltip and the Options button (now in the open-tabs row, clear of the close button) explain what they open.
+
 ## 1.0.0-w14 (2026-11-12): setup walkthrough and settings page teach the features
 
 - **Setup is three steps, not four.** The welcome text sits on the role page, and clicking a role moves straight on to that role's page. Hover a role for what it does.

@@ -108,6 +108,23 @@ function S.session(summons, payments, now)
   return out
 end
 
+-- arrived and not paid: everyone from the last `window` seconds (default 30
+-- min, the payment match window) plus anyone already flagged never paid in
+-- the last 7 days. Newest first. This is the "who still owes me" list.
+function S.openTabs(summons, now, limit, window)
+  window = window or 30 * 60
+  local out = {}
+  for i = #summons, 1, -1 do
+    local s = summons[i]
+    if now - s.t > 7 * 86400 then break end
+    if s.arrived and not s.paid and (now - s.t <= window or s.nonPayer) then
+      table.insert(out, s)
+      if limit and #out >= limit then break end
+    end
+  end
+  return out
+end
+
 function S.neverPaid(summons, limit)
   local out = {}
   for i = #summons, 1, -1 do
