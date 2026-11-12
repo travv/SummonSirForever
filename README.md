@@ -123,4 +123,4 @@ Bug reports: turn on `/console scriptErrors 1`, and for queue problems paste `/s
 
 ---
 
-Forked from [SteaSummonForever](https://github.com/edualve/SteaSummonForever) (MIT). The original raid-summon features still work; their README is in [docs/ORIGINAL-README.md](./docs/ORIGINAL-README.md).
+Based on [SteaSummonForever](https://github.com/edualve/SteaSummonForever) by edualve (MIT).
