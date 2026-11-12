@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-w23 (2026-11-12): fixes the broken w22
+
+- **w22 shipped with an empty TOC file and does not load. Do not use it.** w23 is w22 with the TOC restored. Nothing else changed.
+
 ## 1.0.0-w22 (2026-11-12): one-line status on the clicker page
 
 - The clicker setup page's "hear it in the background" status fits on one line, so step 4 no longer crowds it.
