@@ -75,7 +75,8 @@ M.TYPES = {
     plain = "Summoning to {dest} right now, not {asked}.",
   },
   complete = {
-    label = "Summon complete (payment reminder)",
+    label = "Arrival reminder (off by default: customers expect to trade on arrival)",
+    defaultMode = "off",
     lines = {
       "Welcome to {dest}, sir. That's {price}, trade me when you're ready.",
       "You made it, sir. {price} by trade when you have a moment.",

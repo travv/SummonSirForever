@@ -68,12 +68,9 @@ function L:recordPayment(name, amount, now)
     W.blocklist:remove(name)
   end
   -- one line and the coin sound on every settle path (timer or PLAYER_MONEY)
+  -- any amount counts as paid: discounts are part of the business (Travis, 2026-11-12)
   local note = ""
-  if not s then
-    note = W.hex("comment", "(tip: no open summon)")
-  elseif s.price and amount < s.price then
-    note = W.hex("orange", "(short by " .. W.fmtMoney(s.price - amount) .. ")")
-  end
+  if not s then note = W.hex("comment", "(tip: no open summon)") end
   W.print(W.hex("green", "paid:"), name, W.fmtMoney(amount), note)
   W.playSound("LOOT_WINDOW_COIN_SOUND", 120, "soundPaid")
   W.fire("LEDGER_CHANGED")
