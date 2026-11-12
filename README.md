@@ -1,150 +1,99 @@
 # SummonSirForever
 
-A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever](https://github.com/edualve/SteaSummonForever) (MIT).
+A warlock summon-service addon for WoW: Forever. One window with four tabs runs the whole crew: the warlock who casts, the clickers who click the portal, and the advertiser who posts in the city. Forked from [SteaSummonForever](https://github.com/edualve/SteaSummonForever) (MIT); the original raid-summon features still work and are documented further down.
 
-## Summon service features
+<p align="center"><img src="./img/queue.png" alt="The Queue tab: location, destination, buttons, and the line of customers" width="760"/></p>
 
-SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/ssf` in game. All the original features below still work.
-
-> Not tested in game yet (v1.0.0-w9). Turn on `/console scriptErrors 1` and open an issue with any error text.
-
-### Install (3 min)
+## Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
 2. Extract it into `_forever_\Interface\AddOns\`. You should end up with `AddOns\SummonSirForever\SummonSirForever.toc`.
 3. Fully restart WoW. A `/reload` is not enough for a new addon.
-4. Had SteaSummonForever installed? Delete that folder. The two can't run side by side.
+4. Had SteaSummonForever installed? Delete that folder. The two cannot run side by side.
 
-### First run
-A one-time **setup panel** opens on each character's first login. It asks you to pick a role, then walks you through that role:
-- **Warlock:** destination, price, auto-reply, and plain or "sir" messages.
-- **Clicker:** one click turns on soft interact, then it checks your Interact key binding and shows a test banner.
-- **Advertiser:** ad channel and warlock name, with a preview of the ad.
+Type `/ssf` in chat to open the window. `/ssf help` lists every command.
 
-Run it again any time with `/ssf setup`.
+## First run: the Setup tab (1 min per character)
+The window opens on the **Setup** tab the first time each character logs in. Pick what this window does, and the next page checks that role's setup for you: green means done, orange tells you where to click.
 
-### Roles
-Each window gets one role. Set it with `/ssf role <role>`.
+<p align="center"><img src="./img/setup.png" alt="The Setup tab: pick Warlock, Clicker or Advertiser" width="760"/></p>
 
-| Role | Who | What it does |
+| Role | Who | The setup page checks |
 |---|---|---|
-| `warlock` | the summoner (default for warlocks) | Replies to customers, invites them, queues them, and keeps the ledger |
-| `clicker` | portal clickers (default for everyone else) | Shows a big alert when the portal is up |
-| `advertiser` | a character in a city | Shows a one-click **Post ad** button for the Services channel |
+| **Warlock** | the character that casts Ritual of Summoning | destination, price, that your **Summon Next** key is bound |
+| **Clicker** | anyone standing at the destination to click the portal | soft interact is on, **Interact With Target** is bound, sound plays in the background |
+| **Advertiser** | a character parked in a city | which chat channels the ad posts to, with Join buttons for any you have not joined |
 
-### Features
-**Payment ledger**
-- A trade counts as a payment only when your gold actually goes up by what the customer offered. Forever has no "trade complete" event, so this is how it knows.
-- A cancelled trade, or one with items only, logs nothing.
-- Each payment links to that customer's latest summon from the last 30 minutes.
+Every tab is visible to every role, so a clicker can read the ledger and the advertiser can watch the queue. Rerun setup any time from the Setup tab or `/ssf setup`.
 
-**Stats panel**
-- Open it with `/ssf` or the `$` button on the summon window.
-- It shows this session's summons, gold, gold per hour and % paid.
-- It also shows the last 7 days and weeks starting Monday.
-- `/ssf today` prints today hour by hour in chat.
+## How a sale works
+1. A player whispers the warlock anything like "123", "summon tb" or "wtb sumon pls" (typos are fine). They get one reply with the price and an invite. People who ask for the wrong city get a polite no instead.
+2. When they join the group they appear on the **Queue** tab with their place in line. The first person waiting is marked **NEXT** in green.
+3. Press your **Summon Next** key, the Next button, or the big Summon Next button. The row turns to **Casting**, the group hears who is coming, and every clicker window shows a **PORTAL UP** banner with their Interact key, a sound and a draining 30-second bar.
+4. The clickers press Interact. The row reads **Portal up**, then **Arrived** when the customer takes it.
+5. The customer trades you. The payment lands in the ledger with a coin sound and one "paid:" line in chat. If they arrive and do not pay within 10 minutes they go on the never-paid list and are blocked for 24 hours (paying later lifts it).
 
-**Never-paid list and timed blocklist**
-- A customer who arrived and still hasn't paid after 10 minutes goes on the Never paid list, which has **Paid** and **Block** buttons.
-- They are also blocked for 24h automatically. If they pay later, the block lifts.
-- Blocked players get no reply, no invite and no queue spot.
-- Manual control: `/ssf block <name> 7d`, `/ssf unblock <name>`, `/ssf blocklist`.
+## The tabs
 
-**Destinations and typo-tolerant requests**
-- About 50 presets: capitals, dungeons, raids and towns.
-- "wtb sumon tb", "orgrimar?" and "summon to thunder bluf" are all understood.
-- If someone asks for a different place than yours, they get a polite reply instead of an invite.
+### Queue
+- **Header:** where you stand, where you summon to (click the line to pin where you stand, click again to clear), your soul shards, and `Clickers 2   Raid 7/40`. The raid count goes orange near 35 and red at 39, because invites fail silently at 40.
+- **Buttons:** Next (the keybound cast), AFK (pause auto-invites; whispers get an AFK reply), Ad (post the ad from the warlock), Menu. Everything has a tooltip.
+- **Rows:** X removes someone (no charge). Click a name to summon that person now. Right-click a name to move them to the front or back, remove, block, or whisper them any of the stock messages. Status words: Waiting, Casting, Portal up, Arrived, Declined, Offline, Dead.
+- An empty queue says so. Customers who leave the group are dropped at once; customers offline for 5 minutes are dropped (setting).
 
-**Whisper flow (warlock role)**
-- Anyone who whispers a request gets your price once, plus an invite.
-- They're added to the queue as soon as they join, and get their **place in line**. Asking again tells them where they stand.
-- **Queue cap** (default 30): past it, new customers get a polite "queue is full".
-- People **already standing at the destination** get told so instead of being queued.
-- A full party turns into a raid automatically.
-- "Thanks for the summon" is never treated as a new order.
-- **Summon complete:** when they arrive unpaid, they get a friendly payment reminder.
-- **Out of soul shards:** you get an alert and a sound, and the next person in line gets a one-time "hang tight" whisper.
+### Ledger
+- The session headline in large type: summons, gold, gold per hour, percent paid.
+- **Open tabs:** everyone who arrived and has not paid yet, with **Paid** (mail, a friend paid, a comp) and **Block** buttons. Past the grace time the row turns red and reads "never paid".
+- Last 7 days and the last 8 weeks (Monday to Sunday), scrolling.
+- **Options** opens the settings page.
 
-**Messages**
-- 8 message types: first reply, place in line, queue full, already here, wrong destination, summon complete, out of shards, advertiser reply.
-- Each has 5 lines in the SummonSir voice.
-- Each type can be set to a random line, a fixed line, your own custom text, or off.
-- **Plain mode** swaps them all for short, serious lines.
+### Ads
+- Shows which channels the ad posts to (default: General, Trade, Services, LookingForGroup; names work on every character, numbers like `1, 2, 8` differ per character), the sync state with the warlock, and the ad exactly as it will read.
+- **Post ad** posts once to each channel, then counts down the cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the warlock's destination and price have synced (group with them, or set their name in Setup).
+- Default ad: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" {spell}`. `{spell}` is a clickable [Ritual of Summoning] link.
+- An advertiser with assist in the warlock's raid invites "inv" whisperers itself and puts them in the warlock's queue.
 
-**Right-click a name in the queue**
-- Move them to the front or back.
-- Mark them summoned or remove them.
-- Block them and remove them.
-- Whisper them any message.
+### Setup
+The walkthrough described above. Leaving the tab counts as done.
 
-**Big Summon Next button (warlock)**
-- A big button showing who's next, how many are queued and your shard count. Clicking it does exactly what your Summon Next keybind does.
-- It switches to "Life Tap" when you're low on mana and turns red when you're out of shards.
-- Drag its top strip to move it. Its **Clear** button empties the queue (it asks first).
-- Size, show or hide, and reset position are in settings, or use `/ssf big on|off|reset`.
+## Also on screen
+- **Big Summon Next button** (warlock): who is next, how many are in line, your shards, your keybind. Turns green while casting, red when out of shards, "Life Tap" when low on mana. Clear empties the queue (asks first).
+- **PORTAL UP banner** (clickers): the Interact key to press, who is being summoned, a bar that drains while the portal is up.
+- **Chat:** one "SummonSir:" line for each payment, drop, and ignored (blocked) whisper. A ping when someone joins the queue, the coin sound on payment; both are toggles.
 
-**Stable queue rows**
-- Rows don't shift while your mouse is over the list, so you don't click the wrong person.
-- A row stuck on "pending" with no cast going returns to "requested" after 15 seconds.
+## Settings
+Everything is on the **Summon service** page under **Settings > AddOns > SummonSirForever** (`/ssf options`): role, window behavior, destination and prices per destination, queue cap, every message type (random line, a fixed line, your own text, or off; plus a plain mode), never-paid timing and auto-block, ad text and channels, alerts and sounds.
 
-**Clicker alert**
-- When the portal goes up, clicker windows show **PORTAL UP: press [your Interact key]**, play a sound and flash the taskbar.
-- You still press the key yourself.
-
-**Ads (advertiser role)**
-- **One click on Post ad posts the ad once to each channel in your list.** The default list is `1, 2, 8`; numbers or names both work (`General, Trade, Services`). There is a cooldown between rounds, and nothing posts on its own.
-- Default ad: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" {spell}`. `{spell}` becomes a clickable **[Ritual of Summoning]** link.
-- **The ad follows the main warlock.** The warlock's addon sends its destination and price to the advertiser: the preset it picked, else the destination set on the summon window, else the zone it's standing in. It updates when the warlock moves. If they aren't grouped, typing the warlock's name lets them sync by whisper.
-- **"PST inv" works.** With assist in the warlock's raid, the advertiser replies, invites, and puts the customer in the warlock's queue once they join. The warlock gives the advertiser assist automatically (it converts a party to a raid if needed). Without invite rights, the advertiser points people at the warlock instead.
-
-**Fixes to the original**
-- The Next keybind now marks the row pending and announces the summon.
-- Several Forever API fixes: bag APIs, chat sends, group checks.
-- Summon phrases ignore case and punctuation ("123!", "Summon Plz").
-
-### Settings page
-Every setting below is also on a **Summon service** page in **Settings > AddOns > SummonSirForever**. Open it with `/ssf options` or the **Options** button on the ledger panel. The slash commands are there for when you'd rather type.
-
-### Quick setup
-**Warlock (2 min)**
-1. `/ssf dest tb` sets where you summon to (`/ssf dest list` shows all presets).
-2. `/ssf price 1g` sets the default. `/ssf price 80s org` sets a price for one destination.
-
-**Clickers (1 min each)**
-1. Run `/console SoftTargetInteract 3`.
-2. Bind **Interact With Target** in Key Bindings > Targeting.
-3. Run `/ssf testportal` to check the banner shows your key.
-
-**Advertiser (1 min)**
-1. Join your ad channels (the default list is 1, 2, 8; see `/ssf channels`).
-2. Group with the main warlock. You get assist, and the ad follows the warlock's destination and price. Not grouped? Run `/ssf lock <warlock name>`.
-3. Click **Post ad** once per round: it posts once to each channel.
-
-### Commands
+## Commands
 | Command | Does |
 |---|---|
-| `/ssf` | Ledger panel |
-| `/ssf options` | Summon service settings page |
-| `/ssf role warlock\|clicker\|advertiser` | Set this window's role |
+| `/ssf` | Open the window on the Ledger tab (`/sw` still works) |
+| `/ssf tab queue\|ledger\|ads\|setup` | Open the window on a tab |
+| `/ssf help` | List every command |
+| `/ssf options` | Settings page |
+| `/ssf setup` | The setup walkthrough |
+| `/ssf role warlock\|clicker\|advertiser` | What this window does |
 | `/ssf dest <name>` / `dest list` / `dest clear` | Destination for ads and replies |
-| `/ssf price <amount> [dest]` | Price, e.g. `80s`, `1g`, `1g50s` |
+| `/ssf price <amount> [dest]` | Price: `1` (gold), `80s`, `1g50s`; optional per destination |
 | `/ssf block <name> [30m\|24h\|7d\|perm]` / `unblock` / `blocklist` | Blocklist |
 | `/ssf paid <name> [amount]` | Mark a summon paid by hand |
 | `/ssf today` | Today's summons and gold by hour |
-| `/ssf service on\|off` | Turn the warlock's auto-reply and invites on or off |
+| `/ssf service on\|off` | Auto-reply and invite on or off |
 | `/ssf cap <n>` | Queue cap for new customers (0 = none) |
 | `/ssf plain on\|off` | Plain messages instead of the SummonSir lines |
-| `/ssf say <type>` | Print a sample message of one type |
-| `/ssf setup` | Run the first-time setup again |
+| `/ssf say <type>` | Print a sample message |
 | `/ssf big on\|off\|reset` | Big Summon Next button |
 | `/ssf clear` | Clear the whole queue (asks first) |
-| `/ssf adtext <template>` / `channels <1, 2, 8>` / `lock <name>` | Ad text, ad channels, main warlock's name |
+| `/ssf adtext <template>` / `channels <list>` / `lock <name>` | Ad text, ad channels, main warlock's name |
 | `/ssf testportal` | Preview the clicker banner |
+| `/ssf queuedebug` | Queue state for bug reports |
 
-### Ground rules
+## Ground rules
 - Nothing here presses keys, clicks, or keeps you online.
-- Ads go out only when you click.
+- Ads go out only when you click, once per channel per click.
 - The addon only whispers people who whispered you first.
-- Data is saved per WoW account in `SteaWarlockDB`. The original per-character settings are untouched.
+- Service data is saved per WoW account in `SteaWarlockDB`. The original addon's per-character settings are untouched.
+
+Bug reports: turn on `/console scriptErrors 1`, and for queue problems paste `/ssf queuedebug`.
 
 ---
 
