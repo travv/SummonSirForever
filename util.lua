@@ -243,6 +243,77 @@ local util = {
     end
     return ret
   end,
+
+  -- Dracula palette for the summon window (https://draculatheme.com, MIT).
+  -- Kept here rather than in warlock/core.lua so the window can style
+  -- itself even though our modules load after it.
+  dracula = {
+    bg      = { 0x28, 0x2a, 0x36 },
+    line    = { 0x44, 0x47, 0x5a },
+    fg      = { 0xf8, 0xf8, 0xf2 },
+    comment = { 0x62, 0x72, 0xa4 },
+    cyan    = { 0x8b, 0xe9, 0xfd },
+    green   = { 0x50, 0xfa, 0x7b },
+    orange  = { 0xff, 0xb8, 0x6c },
+    pink    = { 0xff, 0x79, 0xc6 },
+    purple  = { 0xbd, 0x93, 0xf9 },
+    red     = { 0xff, 0x55, 0x55 },
+    yellow  = { 0xf1, 0xfa, 0x8c },
+  },
+
+  rgb = function(self, name, alpha)
+    local c = self.dracula[name] or self.dracula.fg
+    return c[1] / 255, c[2] / 255, c[3] / 255, alpha or 1
+  end,
+
+  -- A flat Dracula button: solid face, 1px border, readable text. Built on a
+  -- plain Button + BackdropTemplate because UIPanelButtonTemplate's stock
+  -- textures can't be recolored cleanly. Use btn:SetFace(color) to tint.
+  flatButton = function(self, name, parent, width, height, text, fontSize)
+    local btn = CreateFrame("Button", name, parent, "BackdropTemplate")
+    btn:SetSize(width, height)
+    btn:SetBackdrop({
+      bgFile = "Interface\\Buttons\\WHITE8x8",
+      edgeFile = "Interface\\Buttons\\WHITE8x8",
+      edgeSize = 1,
+    })
+    btn:SetBackdropColor(self:rgb("line"))
+    btn:SetBackdropBorderColor(self:rgb("purple"))
+    btn:SetNormalFontObject("GameFontHighlight")
+    btn:SetDisabledFontObject("GameFontDisable")
+    btn:SetText(text or "")
+    local fs = btn:GetFontString()
+    if fs then
+      fs:SetFont("Fonts\\FRIZQT__.TTF", fontSize or 12, "")
+      fs:SetPoint("CENTER", 0, 0)
+      fs:SetJustifyH("CENTER")
+    end
+    btn:SetHighlightTexture("Interface\\Buttons\\WHITE8x8", "ADD")
+    btn:GetHighlightTexture():SetVertexColor(self:rgb("purple", 0.25))
+    btn:SetPushedTextOffset(1, -1)
+    btn.face = "line"
+    btn.SetFace = function(this, color)
+      this.face = color or "line"
+      this:SetBackdropColor(self:rgb(this.face))
+    end
+    -- text tint survives enable/disable (a state change re-applies the
+    -- font object, which would reset a plain SetTextColor)
+    btn.SetTextTint = function(this, color)
+      this.tint = color
+      local s = this:GetFontString()
+      if s and color then s:SetTextColor(self:rgb(color)) end
+    end
+    btn:SetScript("OnDisable", function(this)
+      this:SetBackdropColor(self:rgb("bg"))
+      this:SetBackdropBorderColor(self:rgb("comment"))
+    end)
+    btn:SetScript("OnEnable", function(this)
+      this:SetBackdropColor(self:rgb(this.face))
+      this:SetBackdropBorderColor(self:rgb("purple"))
+      if this.tint then this:SetTextTint(this.tint) end
+    end)
+    return btn
+  end,
 }
 
 addonData.util = util

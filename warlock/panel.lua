@@ -171,11 +171,10 @@ end
 -- a small "$" button on the summon window, added the first time it exists
 function UI:attachButton()
   if self.dollar or not SteaSummonFrame then return end
-  local b = CreateFrame("Button", "SteaWarlockLedgerButton", SteaSummonFrame, "UIPanelButtonTemplate")
-  b:SetSize(16, 14)
-  b:SetPoint("TOPLEFT", SteaSummonFrame, "TOPRIGHT", -124, -5)
-  b:SetText("$")
-  b:SetNormalFontObject("GameFontNormalSmall")
+  -- sits left of AFK in the Dracula top bar: [>] [Ad] [AFK] [$]
+  local b = addonData.util:flatButton("SteaWarlockLedgerButton", SteaSummonFrame, 24, 20, "$", 12)
+  b:SetPoint("TOPRIGHT", SteaSummonFrame, "TOPRIGHT", -130, -6)
+  b:SetTextTint("yellow")
   b:SetFrameLevel(3)
   b:SetScript("OnClick", function() UI:toggle() end)
   b:SetScript("OnEnter", function(this)

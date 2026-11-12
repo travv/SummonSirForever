@@ -62,32 +62,35 @@ local summon = {
 
   reConfigureFrames = function(self)
     if SteaSummonFrame and not SteaSummonFrame.location then
+      -- Dracula restyle: 12pt readable text under the button row, left
+      -- aligned next to the shard icon (was 8pt at half alpha)
       SteaSummonFrame.location = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.location:SetFont("Fonts\\ARIALN.ttf", 8, "OUTLINE")
-      SteaSummonFrame.location:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 70, -8)
-      SteaSummonFrame.location:SetPoint("RIGHT", -20, 0)
-      SteaSummonFrame.location:SetJustifyH("RIGHT")
+      SteaSummonFrame.location:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
+      SteaSummonFrame.location:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 68, -32)
+      SteaSummonFrame.location:SetPoint("RIGHT", -100, 0)
+      SteaSummonFrame.location:SetJustifyH("LEFT")
       SteaSummonFrame.location:SetJustifyV("TOP")
-      SteaSummonFrame.location:SetAlpha(.5)
+      SteaSummonFrame.location:SetTextColor(addonData.util:rgb("fg"))
       SteaSummonFrame.location:SetText("")
     end
   
     if SteaSummonFrame and not SteaSummonFrame.destination then
       SteaSummonFrame.destination = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.destination:SetFont("Fonts\\ARIALN.ttf", 8, "OUTLINE")
-      SteaSummonFrame.destination:SetPoint("TOP", SteaSummonFrame.location, "BOTTOM", 0, 0)
-      SteaSummonFrame.destination:SetPoint("LEFT", SteaSummonFrame.location)
-      SteaSummonFrame.destination:SetJustifyH("RIGHT")
+      SteaSummonFrame.destination:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
+      SteaSummonFrame.destination:SetPoint("TOPLEFT", SteaSummonFrame.location, "BOTTOMLEFT", 0, -2)
+      SteaSummonFrame.destination:SetPoint("RIGHT", SteaSummonFrame.location, "RIGHT")
+      SteaSummonFrame.destination:SetJustifyH("LEFT")
       SteaSummonFrame.destination:SetJustifyV("TOP")
-      SteaSummonFrame.destination:SetAlpha(.5)
+      SteaSummonFrame.destination:SetTextColor(addonData.util:rgb("cyan"))
       SteaSummonFrame.destination:SetText("")
     end
   
     if SteaSummonFrame and not SteaSummonFrame.status then
       SteaSummonFrame.status = SteaSummonFrame:CreateFontString(nil,"ARTWORK")
-      SteaSummonFrame.status:SetFont("Fonts\\ARIALN.ttf", 8, "OUTLINE")
-      SteaSummonFrame.status:SetPoint("TOPRIGHT","SteaSummonFrame", "TOPRIGHT", -10, 10)
-      SteaSummonFrame.status:SetAlpha(.5)
+      SteaSummonFrame.status:SetFont("Fonts\\FRIZQT__.TTF", 11, "")
+      SteaSummonFrame.status:SetPoint("TOPRIGHT","SteaSummonFrame", "TOPRIGHT", -10, -32)
+      SteaSummonFrame.status:SetJustifyH("RIGHT")
+      SteaSummonFrame.status:SetTextColor(addonData.util:rgb("comment"))
       SteaSummonFrame.status:SetText("")
     end
     
@@ -167,9 +170,9 @@ local summon = {
 
       if IsInGroup(LE_PARTY_CATEGORY_HOME) and self.location ~= "" and self.zone ~= nil then
         if self.localLocks and self.localLocks + self.localClickers > 2 then
-          SteaSummonFrame.status:SetTextColor(0,1,0,.5)
+          SteaSummonFrame.status:SetTextColor(addonData.util:rgb("green"))
         else
-          SteaSummonFrame.status:SetTextColor(.8,.8,.8,.5)
+          SteaSummonFrame.status:SetTextColor(addonData.util:rgb("comment"))
         end
         SteaSummonFrame.status:SetText(L["Warlocks"] .. " " .. locks .. "\n" .. L["Clickers"] .. " "..  clicks)
       else
@@ -415,15 +418,17 @@ local summon = {
     if idx and type(idx) == "string" then
       idx = tonumber(idx)
     end
-    if idx and idx <= self.numwaiting then
+    -- check the real list, not the cached count: when the two drift apart
+    -- (list replaced by a sync, count not), removals were refused
+    if idx and idx >= 1 and idx <= #self.waiting then
       self:listDirty(true)
       db("summon.waitlist.record", "removing", self:recPlayer(self.waiting[idx]), "from the waiting list")
       table.remove(self.waiting, idx)
-      self.numwaiting = self.numwaiting - 1
       ret = true
     else
-      db("summon.waitlist.record","invalid index for remove", idx, "max:", self.numwaiting)
+      db("summon.waitlist.record","invalid index for remove", idx, "max:", #self.waiting)
     end
+    self.numwaiting = #self.waiting
     return ret
   end,
 
@@ -635,14 +640,16 @@ local summon = {
         f:SetSize(wpos["width"], wpos["height"])
       end
 
+      -- solid Dracula background with a purple border (was a see-through
+      -- dialog texture at half alpha)
       f:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\PVPFrame\\UI-Character-PVP-Highlight",
-        edgeSize = 16,
-        insets = { left = 8, right = 6, top = 8, bottom = 8 },
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 2,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 },
       })
-      f:SetBackdropColor(.57, .47, .85, 0.5)
-      f:SetBackdropBorderColor(.57, .47, .85, 0.5)
+      f:SetBackdropColor(addonData.util:rgb("bg", 0.95))
+      f:SetBackdropBorderColor(addonData.util:rgb("purple"))
 
       --- Movable
       f:SetMovable(true)
@@ -725,6 +732,15 @@ local summon = {
       --- Setup Next button
       addonData.buttons[38].Button:SetPoint("TOPLEFT","SteaSummonFrame","TOPLEFT", -10, 10)
       addonData.buttons[38].Button:SetText(L["Next"])
+      -- PreClick runs for the mouse and the keybind, but on both the down
+      -- and up half of a press: act only on the half the secure cast uses
+      -- (ActionButtonUseKeyDown), so announces go out once
+      addonData.buttons[38].Button:SetScript("PreClick", function(this, button, down)
+        if down ~= nil and down ~= (C_CVar.GetCVarBool("ActionButtonUseKeyDown") and true or false) then
+          return
+        end
+        addonData.summon:nextClick(button)
+      end)
 
       --- Setup Summon Me button
       addonData.buttons[39].Button:SetPoint("TOPLEFT","SteaSummonFrame","TOPLEFT", -10, 10)
@@ -810,8 +826,10 @@ local summon = {
         end
 
         local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", SteaSummonFrame, "UIPanelButtonTemplate")
-        invdest:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 75, -8)
-        invdest:SetPoint("RIGHT","SteaSummonFrame", "RIGHT", 24)
+        -- covers the location + destination lines (click to set/unset)
+        invdest:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 66, -30)
+        invdest:SetPoint("RIGHT","SteaSummonFrame", "RIGHT", -100, 0)
+        invdest:SetHeight(32)
         invdest:SetAlpha(0)
         invdest:SetFrameLevel(2)
         invdest:RegisterForClicks()
@@ -834,12 +852,12 @@ local summon = {
         f.shards:SetBackdrop({
           bgFile = "Interface\\ICONS\\INV_Misc_Gem_Amethyst_02",
         })
-        f.shards:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 45, -24)
-        f.shards:SetSize(12,12)
+        f.shards:SetPoint("TOPLEFT","SteaSummonFrame", "TOPLEFT", 46, -32)
+        f.shards:SetSize(16,16)
 
         f.shards.count = f.shards:CreateFontString(nil,"ARTWORK", nil, 7)
-        f.shards.count:SetFont("Fonts\\ARIALN.ttf", 12, "OUTLINE") -- "BOLD" is not a valid flag; modern clients reject it
-        f.shards.count:SetPoint("CENTER","SteaSummonShardIcon", "CENTER", 5, -5)
+        f.shards.count:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE") -- "BOLD" is not a valid flag; modern clients reject it
+        f.shards.count:SetPoint("CENTER","SteaSummonShardIcon", "CENTER", 6, -6)
         f.shards.count:SetText("0")
         f.shards.count:SetTextColor(1,1,1,1)
         f.shards.count:Show()
@@ -848,12 +866,9 @@ local summon = {
 
       --- AFK toggle button
       if addonData.util:playerCanSummon() then
-        f.afkbutton = CreateFrame("Button", "SteaSummonAfkButton", SteaSummonFrame, "UIPanelButtonTemplate")
-        f.afkbutton:SetSize(40, 14)
-        f.afkbutton:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPRIGHT", -106, -5)
-        f.afkbutton:SetText(L["AFK"])
-        f.afkbutton:SetNormalFontObject("GameFontNormalSmall")
-        f.afkbutton:SetHighlightFontObject("GameFontHighlightSmall")
+        -- top bar, right to left: [>] [Ad] [AFK] [$]  (the $ comes from warlock/panel.lua)
+        f.afkbutton = addonData.util:flatButton("SteaSummonAfkButton", SteaSummonFrame, 46, 20, L["AFK"], 12)
+        f.afkbutton:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -80, -6)
         f.afkbutton:SetFrameLevel(3)
         f.afkbutton:SetScript("OnClick", function()
           addonData.summon:afkToggle()
@@ -870,13 +885,10 @@ local summon = {
 
       --- trade advertisement button (shows cooldown countdown while waiting)
       if addonData.util:playerCanSummon() then
-        f.adbutton = CreateFrame("Button", "SteaSummonAdButton", SteaSummonFrame, "UIPanelButtonTemplate")
-        f.adbutton:SetSize(40, 14)
-        f.adbutton:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPRIGHT", -62, -5)
-        f.adbutton:SetText(L["Ad"])
-        f.adbutton:SetNormalFontObject("GameFontNormalSmall")
-        f.adbutton:SetHighlightFontObject("GameFontHighlightSmall")
-        f.adbutton:SetDisabledFontObject("GameFontDisableSmall")
+        f.adbutton = addonData.util:flatButton("SteaSummonAdButton", SteaSummonFrame, 46, 20, L["Ad"], 12)
+        f.adbutton:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -30, -6)
+        f.adbutton:SetFace("purple")
+        f.adbutton:SetTextTint("bg")
         f.adbutton:SetFrameLevel(3)
         f.adbutton:SetScript("OnClick", function()
           addonData.chat:advertise()
@@ -893,15 +905,11 @@ local summon = {
       end
 
       --- context menu
-      f.context = CreateFrame("Button", "SteaSummonContextMenuButton",
-          SteaSummonFrame, "UIPanelButtonTemplate")
-      f.context:SetWidth(10)
-      f.context:SetHeight(10)
-      f.context:SetText(">")
-      f.context:SetPoint("TOPLEFT","SteaSummonFrame","TOPRIGHT", -17, -7)
-      f.context:SetScript("OnMouseUp", function() addonData.appbutton:menu() end)
+      f.context = addonData.util:flatButton("SteaSummonContextMenuButton", SteaSummonFrame, 20, 20, ">", 12)
+      f.context:SetPoint("TOPRIGHT","SteaSummonFrame","TOPRIGHT", -6, -6)
+      f.context:SetTextTint("purple")
+      f.context:SetScript("OnClick", function() addonData.appbutton:menu() end)
       f.context:SetFrameLevel(3)
-      f.context:SetAlpha(0.5)
 
       --- raid lead button
       local function relinquishLead()
@@ -1023,25 +1031,21 @@ local summon = {
             end
           end
 
-          local z,l = self:getCurrentLocation()
-
           if (addonData.util:playerCanSummon()) then
+            -- resolve the row's person at click time, not at redraw time:
+            -- if the row changed hands since, re-aim the macro so the
+            -- whisper and the cast always name the same player
             summonClick = function(_, button)
               if button == nil or button == "LeftButton" then
-                if not addonData.summon.isCasting then
-                  if hasSummonMana() then
-                    db("summon.display","summoning ", player)
-                    addonData.gossip:status(player, "pending")
-                    addonData.chat:raid(SteaSummonSave.raidchat, player)
-                    addonData.chat:say(SteaSummonSave.saychat, player)
-                    addonData.chat:whisper(SteaSummonSave.whisperchat, player)
-                    self.summoningPlayer = player
-                    addonData.gossip:destination(z, l)
-                    self.hasSummoned = true
-                  end
-                else
-                  addonData.chat:say(SteaSummonSave.clicknag, player)
+                local cur = self:rowRecord(i)
+                local who = cur and self:recPlayer(cur)
+                if not who then
+                  return
                 end
+                if who ~= player and not InCombatLockdown() then
+                  self:SetMacro(i, who)
+                end
+                self:summonAnnounce(who)
               end
             end
             addonData.buttons[i].Button:SetScript("OnMouseDown", summonClick)
@@ -1078,22 +1082,19 @@ local summon = {
               next = true
               self.nextIdx = recIdx
               self:SetMacro(38, player)
-              -- PreClick runs for the mouse and the keybind, but on both the
-              -- down and up half of a press: act only on the half the secure
-              -- cast uses (ActionButtonUseKeyDown), so announces go out once
-              addonData.buttons[38].Button:SetScript("PreClick", function(this, button, down)
-                if down ~= nil and down ~= (C_CVar.GetCVarBool("ActionButtonUseKeyDown") and true or false) then
-                  return
-                end
-                summonClick(this, button)
-              end)
+              -- the PreClick is permanent (set once at frame creation) and
+              -- re-resolves the next person when pressed
               addonData.buttons[38].Button:Show()
             end
             listActive = true
           elseif next and self.isCasting then
             addonData.buttons[38].Button:Show()
-            local nextplayer = self:recPlayer(self.waiting[self.nextIdx])
-            self:SetMacro(38, nextplayer)
+            -- by record, not by the index saved at the last redraw: the
+            -- list can shift under that index mid-cast and re-aim the
+            -- macro at a different person than the one announced
+            if nextRec then
+              self:SetMacro(38, self:recPlayer(nextRec))
+            end
           end
 
           --- Time
@@ -1244,6 +1245,55 @@ local summon = {
     end
     db("summon.display", "setting show", self.show)
     self:showSummons()
+  end,
+
+  ---------------------------------
+  -- Announce one summon: status, group/say/whisper lines, destination.
+  -- Shared by the row buttons, the Next button and the big button, and
+  -- always given the person the macro is about to target.
+  summonAnnounce = function(self, player)
+    self = addonData.summon
+    if not player or player == "" then
+      return
+    end
+    if self.isCasting then
+      addonData.chat:say(SteaSummonSave.clicknag, player)
+      return
+    end
+    if not hasSummonMana() then
+      return -- the macro Life Taps instead, nothing to announce
+    end
+    db("summon.display", "summoning ", player)
+    self.summoningPlayer = player
+    addonData.gossip:status(player, "pending")
+    addonData.chat:raid(SteaSummonSave.raidchat, player)
+    addonData.chat:say(SteaSummonSave.saychat, player)
+    addonData.chat:whisper(SteaSummonSave.whisperchat, player)
+    local z, l = self:getCurrentLocation()
+    addonData.gossip:destination(z, l)
+    self.hasSummoned = true
+  end,
+
+  ---------------------------------
+  -- Next pressed (button, keybind or the big button): pick the first
+  -- requested person NOW, aim the macro at them, then announce them. The
+  -- old code announced a name captured at the last redraw while the macro
+  -- could have been re-pointed through a stale list index.
+  nextClick = function(self, button)
+    self = addonData.summon
+    if button ~= nil and button ~= "LeftButton" then
+      return
+    end
+    local rec = self:firstRequested()
+    if not rec then
+      return
+    end
+    local player = self:recPlayer(rec)
+    self.nextIdx = self:findWaitingPlayerIdx(player)
+    if not InCombatLockdown() then
+      self:SetMacro(38, player)
+    end
+    self:summonAnnounce(player)
   end,
 
   ---------------------------------
@@ -1500,13 +1550,15 @@ local summon = {
     wipe(self.afkReplied) -- each AFK session replies to each player once
     local btn = SteaSummonAfkButton
     if self.afk then
-      if btn then
-        btn:SetNormalFontObject("GameFontRedSmall")
+      if btn and btn.SetFace then
+        btn:SetFace("red")
+        btn:SetTextTint("bg")
       end
       cprint(L["You are now AFK: auto invites are paused and asks get an AFK reply"])
     else
-      if btn then
-        btn:SetNormalFontObject("GameFontNormalSmall")
+      if btn and btn.SetFace then
+        btn:SetFace("line")
+        btn:SetTextTint("fg")
       end
       cprint(L["You are no longer AFK"])
     end

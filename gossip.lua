@@ -424,41 +424,31 @@ local gossip = {
 
   ---------------------------------
   status = function(self, player, status)
-    if self:isLeader() then
-      local idx = addonData.summon:findWaitingPlayerIdx(player)
-      if idx then
-        if addonData.summon:recStatus(addonData.summon.waiting[idx]) ~= status then
-          addonData.summon:recStatus(addonData.summon.waiting[idx], status)
-          if self:noComms() then
-            return
-          end
-          db("gossip", ">> status >> ", self:groupText(), player, status)
-          self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, self:groupText())
-          if status == "offline" then
-            self.atDest[player] = nil
-            self:updateCounts(false, player)
-          end
-          if addonData.summon.needBoost then
-            addonData.alt:listBoost()
-          end
-        end
-      end
-    else
-      if self:noComms() then
-        return
-      end
-      local leader = self.netList[1]
-      if self.inInit or not leader or leader == self.me or not IsInGroup()
-          or not (UnitInParty(leader) or UnitInRaid(leader)) then
-        -- no reachable queue leader: set it here and tell the group directly
-        addonData.summon:status(player, status)
-        if IsInGroup() then
-          self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, self:groupText())
-        end
-        return
-      end
-      db("gossip", ">> status >> WHISPER", player, status)
-      self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, "WHISPER", leader)
+    -- Same shape as arrived: apply locally, then tell the whole group. The
+    -- old non-leader path only whispered the leader and changed nothing
+    -- here, so on the warlock a summoned person stayed "requested" and Next
+    -- kept offering them.
+    local idx = addonData.summon:findWaitingPlayerIdx(player)
+    if not idx then
+      return
+    end
+    if addonData.summon:recStatus(addonData.summon.waiting[idx]) == status then
+      return
+    end
+    addonData.summon:recStatus(addonData.summon.waiting[idx], status)
+    if status == "offline" then
+      self.atDest[player] = nil
+      self:updateCounts(false, player)
+    end
+    if self:noComms() then
+      return
+    end
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) then
+      db("gossip", ">> status >> ", self:groupText(), player, status)
+      self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, self:groupText())
+    end
+    if self:isLeader() and addonData.summon.needBoost then
+      addonData.alt:listBoost()
     end
   end,
 
@@ -474,35 +464,27 @@ local gossip = {
       cancelText = "false"
     end
 
-    if self:isLeader() then
-      if addonData.summon:findWaitingPlayerIdx(player) then
-        addonData.summon:arrived(player, cancel)
-        if self:noComms() then
-          return
-        end
-        db("gossip", ">> arrived >>", self:groupText(), player, cancel)
-        self:SendCommMessage(self.channel, "a " .. player .. " " .. cancelText, self:groupText())
-        addonData.alt:listShorter()
-      end
-    else
-      if self:noComms() then
-        return
-      end
-      local leader = self.netList[1]
-      if self.inInit or not leader or leader == self.me or not IsInGroup()
-          or not (UnitInParty(leader) or UnitInRaid(leader)) then
-        -- no reachable queue leader (solo, mid-handshake, or a leader name
-        -- that isn't in the group): remove here and tell the group directly
-        addonData.summon:arrived(player, cancel)
-        if IsInGroup() then
-          self:SendCommMessage(self.channel, "a " .. player .. " " .. cancelText, self:groupText())
-        end
-        addonData.summon:showSummons()
-        return
-      end
-      db("gossip", ">> arrived >> WHISPER", leader, player)
-      self:SendCommMessage(self.channel, "a " .. player .. " ".. cancelText, "WHISPER", leader)
+    -- Upstream only let the network leader remove, and everyone else
+    -- whispered the leader. With clickers and the advertiser running the
+    -- addon the leader is often one of them, and a lost whisper meant the
+    -- X and Clear did nothing on the warlock. Now every client removes
+    -- locally and tells the whole group; the leader relays as before, and
+    -- every client already handles a group "a" message.
+    local had = addonData.summon:findWaitingPlayerIdx(player) ~= nil
+    addonData.summon:arrived(player, cancel)
+    self.lastRemoval = { player = player, had = had, leader = self:isLeader(), at = GetTime() }
+    if self:noComms() then
+      addonData.summon:showSummons()
+      return
     end
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and (had or not self:isLeader()) then
+      db("gossip", ">> arrived >>", self:groupText(), player, cancel)
+      self:SendCommMessage(self.channel, "a " .. player .. " " .. cancelText, self:groupText())
+    end
+    if self:isLeader() and had then
+      addonData.alt:listShorter()
+    end
+    addonData.summon:showSummons()
   end,
 
   ---------------------------------
@@ -806,10 +788,29 @@ local gossip = {
     if self:noComms() then
       return
     else
+      -- modern clients report the sender as Name-Realm; our identities
+      -- (self.me, netList, waiting records) carry no realm, so strip it or
+      -- nothing ever compares equal (own echoes, leader checks)
+      self.lastRawSender = sender
+      sender = addonData.util:shortName(sender)
+      self.lastSender = sender
+      self.lastMsg = msg
       if sender ~= self.me or self.inInit then
         addonData.gossip:receive(msg, dist, sender, ... )
       end
     end
+  end,
+
+  ---------------------------------
+  -- "<player> <flag>" where the player can be a Forever "First Last" name:
+  -- the flag is the last word, the player is everything before it
+  splitPlayerFlag = function(_, text)
+    if not text then return nil, nil end
+    local player, flag = string.match(text, "^(.-)%s+(%S+)$")
+    if not player or player == "" then
+      return text, nil
+    end
+    return player, flag
   end,
 
   ---------------------------------
@@ -848,7 +849,9 @@ local gossip = {
     --- arrive
     if cmd == "a" then
       db("gossip", "<< arrived <<", subcmd)
-      local player, cancel = strsplit(" ", subcmd)
+      -- not strsplit: "a Summ Bert true" would read the player as "Summ"
+      -- and the flag as "Bert", so nobody was ever found and removed
+      local player, cancel = self:splitPlayerFlag(subcmd)
 
       if cancel == "true" then
         cancel = true
@@ -892,9 +895,11 @@ local gossip = {
       --- chat this
     elseif cmd == "ct" then
       if sender == self.netList[1] then -- at least protect from people other than net lead abusing this
-        local msgtype, to = strsplit(" ", subcmd)
-        if not msgtype or msgtype == "" then
-          msgtype = to
+        -- payload is " msgtype [First Last]": first word is the type, the
+        -- rest (may contain a space) is the target
+        local msgtype, to = string.match(subcmd or "", "^%s*(%S+)%s*(.-)%s*$")
+        if to == "" then
+          to = nil
         end
         db("gossip", "<< chat this <<", sender, msgtype, to)
         self:chatThis(msgtype, to)

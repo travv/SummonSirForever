@@ -2,7 +2,7 @@
 ## Title: SummonSirForever
 ## Notes: Warlock summon service: one-button summons, payment ledger, never-paid blocklist, clicker alerts. Fork of SteaSummonForever.
 ## Author: travv (fork of Edualve's SteaSummonForever)
-## Version: 1.0.0-w9
+## Version: 1.0.0-w10
 ## IconTexture: Interface/ICONS/Spell_Shadow_Twilight
 ## SavedVariablesPerCharacter: SteaSummonSave, SteaDEBUG, SteaSummonSaveLDB
 ## SavedVariables: SteaWarlockDB
@@ -40,6 +40,7 @@ warlock\service.lua
 warlock\panel.lua
 warlock\rowmenu.lua
 warlock\bignext.lua
+warlock\queuedebug.lua
 warlock\options.lua
 warlock\setup.lua
 warlock\start.lua

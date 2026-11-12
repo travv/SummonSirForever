@@ -99,11 +99,18 @@ function N:build()
   b.line3:SetPoint("RIGHT", -6, 0)
   b.line3:SetJustifyH("LEFT")
 
-  -- same announce/pending logic as the Next button, once per press
-  b:SetScript("PreClick", function(_, button, down)
+  -- same announce/pending logic as the Next button, once per press. The
+  -- Next PreClick re-aims its macro at the person it announces, so copy
+  -- that macro here before our own secure click fires (the 0.5s refresh
+  -- copy could be half a second stale)
+  b:SetScript("PreClick", function(this, button, down)
     local nb = next38()
     local pre = nb and nb:GetScript("PreClick")
     if pre then pre(nb, button, down) end
+    if nb and not InCombatLockdown() then
+      local macro = nb:GetAttribute("macrotext") or ""
+      if this:GetAttribute("macrotext") ~= macro then this:SetAttribute("macrotext", macro) end
+    end
   end)
 
   self.frame, self.button = f, b

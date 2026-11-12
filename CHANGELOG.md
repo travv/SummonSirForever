@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0-w10 (2026-11-11): X and Clear work from the warlock, summon window restyled
+
+### Fixes
+- **The X next to a name and Clear queue did nothing from the warlock.** Root cause found in the wire format: the network removal message is `a <player> true`, and the receiver split it on spaces. With Forever's two-word names, `a Summ Bert true` read the player as "Summ" and the flag as "Bert", so the leader never found anyone to remove. The parser now takes the last word as the flag and everything before it as the name.
+- **Removals and status changes no longer depend on the network leader.** Every client applies them locally and tells the whole group (the leader relays once, no echo loop). Before, a non-leader warlock only whispered the leader, which is usually a clicker or the advertiser, and a lost whisper meant nothing happened.
+- **Summon whisper could name the wrong person.** The Next button announced a name captured at the last redraw while its cast macro could be re-aimed through a stale list index mid-cast, and the big button copied that macro on a half-second timer. Next, the row buttons and the big button now pick the person at click time, aim the macro at them and announce the same name.
+- Comm senders arrive as `Name-Realm` on modern clients; they are normalized so own echoes are dropped and leader checks compare equal.
+- `ct` (chat-this) relays keep two-word target names.
+- Record removal checks the real list length and resyncs the cached count.
+
+### New
+- `/sw queuedebug` prints me, role, leader state, netList, the waiting list, the last removal and the last comm message. Paste it when a removal fails.
+- **Summon window restyle (Dracula):** solid #282a36 background with a purple border, 12pt location and destination text under the button row (destination in cyan), warlock/clicker counts inside the frame, and a flat top bar `[$] [AFK] [Ad] [>]` with 20px buttons. AFK turns red while on; Ad is purple and dims during its cooldown.
+
 ## 1.0.0-w9 (2026-11-11): advertiser works like Travis's macro
 
 - **One Post ad click posts the ad once to each listed channel.** The default list is `1, 2, 8`, as numbers or names (`/sw channels`). There is still one cooldown per round and nothing on a timer.
