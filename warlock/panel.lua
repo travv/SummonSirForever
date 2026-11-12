@@ -35,11 +35,11 @@ function UI:buildInto(parent)
 
   -- headline: the numbers that matter, in large type
   f.headSub = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  f.headSub:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -32)
+  f.headSub:SetPoint("TOPLEFT", f, "TOPLEFT", 62, -30) -- right of the portrait circle
   f.headSub:SetPoint("RIGHT", f, "RIGHT", -14, 0)
   f.headSub:SetJustifyH("LEFT")
   f.head = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  f.head:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -48)
+  f.head:SetPoint("TOPLEFT", f, "TOPLEFT", 62, -46)
   f.head:SetPoint("RIGHT", f, "RIGHT", -14, 0)
   f.head:SetJustifyH("LEFT")
   f.head:SetWordWrap(false)

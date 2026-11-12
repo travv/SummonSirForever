@@ -70,7 +70,10 @@ function A:channelSummary()
   for _, c in ipairs(self:channels()) do
     local label = tostring(c.want)
     if c.id then
-      table.insert(parts, W.hex("green", label .. " " .. (c.name or "")))
+      -- "Trade - City" for a name you typed; "2 Trade - City" for a number
+      local shown = c.name or label
+      if type(c.want) == "number" then shown = label .. " " .. shown end
+      table.insert(parts, W.hex("green", shown))
     else
       table.insert(parts, W.hex("orange", label .. " (not joined)"))
     end
@@ -107,7 +110,7 @@ function A:buildInto(parent)
   p:Hide()
 
   p.title = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  p.title:SetPoint("TOPLEFT", p, "TOPLEFT", 14, -32)
+  p.title:SetPoint("TOPLEFT", p, "TOPLEFT", 62, -30) -- right of the portrait circle
   p.title:SetText("Post ad")
 
   p.channels = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -125,7 +128,8 @@ function A:buildInto(parent)
   -- the ad, as it will read, in its own box
   p.inset = CreateFrame("Frame", nil, p, "InsetFrameTemplate")
   p.inset:SetPoint("TOPLEFT", p, "TOPLEFT", 8, -112)
-  p.inset:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -8, 76)
+  p.inset:SetPoint("RIGHT", p, "RIGHT", -8, 0)
+  p.inset:SetHeight(60) -- refresh() fits it to the ad text
   p.preview = p.inset:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   p.preview:SetPoint("TOPLEFT", p.inset, "TOPLEFT", 12, -12)
   p.preview:SetPoint("RIGHT", p.inset, "RIGHT", -12, 0)
@@ -177,6 +181,7 @@ function A:refresh()
     p.sync:SetText(W.hex("comment", "Advertises ") .. W.destName() .. W.hex("comment", " for ") .. W.fmtMoney(W.priceFor(W.destKey())))
   end
   p.preview:SetText(self:text())
+  p.inset:SetHeight(math.max(44, (p.preview:GetStringHeight() or 20) + 24))
   local ready, remaining = addonData.chat:adReady()
   if not self:synced() then
     p.button:SetText("Waiting for warlock")

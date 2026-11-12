@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-w19 (2026-11-12): tab screenshots, round one
+
+- The ledger headline, the Ads title and the setup "step n of 3" line start to the right of the portrait circle instead of under it.
+- The Ads channel line names each channel once ("Trade - City", or "8 Services" when you listed a number) instead of "Trade Trade".
+- The ad text box fits the text instead of filling the tab.
+
 ## 1.0.0-w18 (2026-11-12): LookingForGroup is an ad channel
 
 - The default ad channels are **General, Trade, Services, LookingForGroup**. LookingForGroup is the one global channel and players opt in to it, so the ad belongs there (Travis, 2026-11-12). A saved w16 default ("General, Trade, Services") picks it up once; a custom list is kept.

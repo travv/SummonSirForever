@@ -338,7 +338,7 @@ function U:buildInto(parent)
   f.inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -48)
   f.inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 44)
 
-  f.steps = text(f, "GameFontNormalSmall", "comment", 14, -30)
+  f.steps = text(f, "GameFontNormalSmall", "comment", 62, -30) -- right of the portrait circle
 
   local content = CreateFrame("Frame", nil, f)
   content:SetPoint("TOPLEFT", 24, -62)
