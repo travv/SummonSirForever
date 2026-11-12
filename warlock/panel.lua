@@ -126,7 +126,7 @@ end
 function UI:headline(now)
   local s = W.stats.session(W.db.summons, W.db.payments, now)
   if not s then
-    return dim("No summons yet"), dim("They show up here after each cast.")
+    return dim("They show up here after each cast."), dim("No summons yet")
   end
   local label = (s.active and "This session" or "Last session") .. " (" .. W.stats.duration((s.active and now or s.last) - s.first) .. ")"
   local line = string.format("%d summons   %s   %s/hr   %s",
@@ -195,7 +195,11 @@ function UI:refresh()
   f.body:SetWidth(math.max(100, f.scroll:GetWidth() or 300))
   f.body:SetText(self:bodyText(now))
   f.scrollChild:SetWidth(f.body:GetWidth())
-  f.scrollChild:SetHeight(math.max(20, (f.body:GetStringHeight() or 20) + 8))
+  local childH = math.max(20, (f.body:GetStringHeight() or 20) + 8)
+  f.scrollChild:SetHeight(childH)
+  -- the stock scroll bar always shows; hide it while everything fits
+  local bar = f.scroll.ScrollBar
+  if type(bar) == "table" then bar:SetShown(childH > (f.scroll:GetHeight() or 0)) end
 
   local tabs = W.stats.openTabs(W.db.summons, now, UI.ROWS)
   f.npTitle:SetText(#tabs > 0 and "Open tabs" or dim("Open tabs: none"))

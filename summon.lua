@@ -24,6 +24,7 @@ local function goldLabel(text)
 end
 local DESTINATION_UNSET = "|cffffd200Destination:|r |cff808080not set. Click to summon to where you stand.|r"
 local NEXT_MARK = "|cff1aff1aNEXT|r"
+local DESTINATION_TEAM = "|cffffd200Destination:|r |cff808080the warlock sets it; it shows here once pinned.|r"
 local MAX_RAID = 40
 
 -- API compat: create a frame, falling back to another (or no) template when the
@@ -755,6 +756,7 @@ local summon = {
       sf:SetPoint("TOPLEFT", listParent, "TOPLEFT", 4, -4)
       sf:SetPoint("BOTTOMRIGHT", listParent, "BOTTOMRIGHT", -27, 22) -- clear of the resize grip
 
+      f.scroll = sf
       addonData.buttonFrame = CreateFrame("Frame", "SteaSummonButtonFrame", sf)
       addonData.buttonFrame:SetSize(330, 37 * 25 + 10)
       addonData.buttonFrame:SetScale(SteaSummonSave.listSize)
@@ -1135,6 +1137,27 @@ local summon = {
         end
       end -- skip visual updates
     end -- rows
+
+    --- clickers and advertisers cannot pin a destination: show the warlock's
+    --- instead of the "click to summon" hint (the synced one for advertisers)
+    if SteaSummonFrame.destination and self.zone == "" and not addonData.util:playerCanSummon() then
+      local Wk = addonData.W
+      local remote = Wk and Wk.role and Wk.role() == "advertiser" and Wk.db and Wk.db.remoteDest
+      if remote and remote ~= "" then
+        SteaSummonFrame.destination:SetText("|cffffd200Destination:|r " .. remote .. " |cff808080(from the warlock)|r")
+      else
+        SteaSummonFrame.destination:SetText(DESTINATION_TEAM)
+      end
+    end
+
+    --- the stock scroll bar always shows; hide it while the list fits
+    if SteaSummonFrame.scroll then
+      local bar = SteaSummonFrame.scroll.ScrollBar
+      if type(bar) == "table" then
+        local listH = (self.numwaiting * 25 + 10) * (SteaSummonSave.listSize or 1)
+        bar:SetShown(listH > (SteaSummonFrame.scroll:GetHeight() or 0))
+      end
+    end
 
     --- empty queue: say so, and what fills it
     if SteaSummonFrame.emptyText then

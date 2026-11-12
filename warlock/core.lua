@@ -105,7 +105,7 @@ W.DEFAULTS = {
   soundJoin = true,       -- warlock: ping when someone lands in the queue
   soundPaid = true,       -- coin sound when a payment is recorded
   adChannel = "Services",  -- (pre-w9 single channel; adChannels replaces it)
-  adChannels = "1, 2, 8",  -- channel numbers or names; one click posts the ad to each
+  adChannels = "General, Trade, Services",  -- names resolve on every character; numbers are per-character (w16)
   adTemplate = "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
   replyText = "Right away, sir! Summon to {dest} is {price}. Invite sent! Accept the summon within 2 min and pay by trade when you land!",
   wrongDestText = "So sorry, sir! I'm summoning to {dest} right now, not {asked}!",
@@ -118,6 +118,7 @@ W.DEFAULTS = {
 
 -- earlier stock wording: saved texts that still match get the new defaults
 W.STOCK = {
+  adChannels = { "1, 2, 8" }, -- w16: /8 was LookingForGroup on the advertiser
   adTemplate = {
     "{dest} summons {price}! /w {lock} 123",
     "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",

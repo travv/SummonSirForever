@@ -335,7 +335,7 @@ function O:build()
         args = {
           adChannels = {
             order = 1, type = "input", name = "Ad channels", width = "normal",
-            desc = "Your chat channel numbers (1, 2, 8) or names (General, Trade, Services), comma separated. One click posts the ad once to each one you've joined.",
+            desc = "Channel names (General, Trade, Services) or this character's channel numbers, comma separated. Names are safer: /8 is Services on one character and LookingForGroup on another. One click posts the ad once to each one you've joined.",
             get = function() return db().adChannels end,
             set = function(_, v) if v ~= "" then db().adChannels = v; changed() end end,
           },

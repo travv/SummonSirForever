@@ -24,8 +24,9 @@ function A.findChannel(list, wanted)
   return nil
 end
 
--- "1, 2, 8" or "General, Trade, Services": numbers are your chat channel
--- numbers (/1, /2, /8), names match from the start of the channel name
+-- "General, Trade, Services" or "1, 2, 8": names match from the start of the
+-- channel name and work on every character; numbers are that character's own
+-- /1 /2 /8 and differ between characters (on the advertiser /8 was LFG)
 function A.parseChannels(text)
   local out = {}
   for token in string.gmatch(text or "", "[^,]+") do
@@ -184,7 +185,7 @@ function A:init()
     W.print("ad:", A:text())
     W.fire("CONFIG_CHANGED")
   end)
-  W.command("channels", "channels <1, 2, 8 or names>: where one Post ad click posts", function(args)
+  W.command("channels", "channels <General, Trade, Services or numbers>: where one Post ad click posts", function(args)
     if args ~= "" then W.db.adChannels = args end
     W.print("ad channels:", A:channelSummary())
     W.fire("CONFIG_CHANGED")

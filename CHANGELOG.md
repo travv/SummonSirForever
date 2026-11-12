@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-w16 (2026-11-12): fixes from the first w15 screenshots
+
+- **Ad channels default to names: General, Trade, Services.** Channel numbers belong to one character: on the advertiser, /8 turned out to be LookingForGroup, so the "1, 2, 8" default would have posted the ad there. Names resolve on every character. A saved "1, 2, 8" is migrated once; any other custom list is kept. The ad window and the settings page already show the resolved channel names, so you can see where an ad will land before posting.
+- **Ledger headline when empty** reads "No summons yet" in large type with the explanation under it (it was the other way around).
+- **Destination line on clickers and advertisers** no longer says "click to summon to where you stand" (they cannot). It shows the warlock's synced destination on the advertiser, or "the warlock sets it" until one is pinned.
+- Scroll bars on the queue and the ledger body hide while everything fits, instead of showing arrows over an empty list.
+
 ## 1.0.0-w15 (2026-11-12): the side panels read at a glance
 
 - **Ledger panel leads with the number that matters:** a large "12 summons   11g 50s   23g/hr   92% paid" headline under "This session (1h12m)". The history (7 days, weeks) scrolls instead of clipping once there is a week of data; the role / destination / price / shards line moved to the bottom, dimmed.
