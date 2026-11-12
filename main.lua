@@ -25,10 +25,10 @@
 -- sound: RAID_WARNING = 8959,
 
 local addonName, addonData = ...
-local L = LibStub("AceLocale-3.0"):GetLocale("SteaSummonForever")
+local L = LibStub("AceLocale-3.0"):GetLocale("SummonSirForever")
 
 -- keybind stuff
-BINDING_HEADER_STEASUMMON = "SteaSummon"
+BINDING_HEADER_STEASUMMON = "SummonSirForever"
 _G["BINDING_NAME_CLICK SteaSummonButton38:LeftButton"] = L["Summon Next"]
 _G["BINDING_NAME_CLICK SteaSummonToButton:LeftButton"] = L["Set Destination"]
 

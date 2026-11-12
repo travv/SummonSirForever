@@ -1,5 +1,5 @@
 _,addonData = ...
-local L = LibStub("AceLocale-3.0"):GetLocale("SteaSummonForever")
+local L = LibStub("AceLocale-3.0"):GetLocale("SummonSirForever")
 local g_self -- for callbacks
 
 -- API compat: the WoW: Forever client removed these classic-era globals

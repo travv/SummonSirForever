@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-w2 (2026-11-11): renamed to SummonSirForever
+
+- The addon folder, TOC and title are now **SummonSirForever** (repo: github.com/travv/SummonSirForever). Delete any old `SteaSummonForever` folder: the two can't be installed together.
+- Saved-data names and the `SteaSummon` sync channel are unchanged, so queues still sync with SteaSummon users.
+- Settings from the old folder don't carry over, because WoW stores them by folder name.
+
 ## 1.0.0-w1 (2026-11-11), travv fork: summon service
 
 Adds a summoning-service layer in `warlock/` (all new files, MIT). Type `/sw` for the commands.

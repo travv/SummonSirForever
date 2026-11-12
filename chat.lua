@@ -1,7 +1,7 @@
 -- chat message interpretation
 
 local _, addonData = ...
-local L = LibStub("AceLocale-3.0"):GetLocale("SteaSummonForever")
+local L = LibStub("AceLocale-3.0"):GetLocale("SummonSirForever")
 local gossip = addonData.gossip
 local debug = addonData.debug
 local settings = addonData.settings

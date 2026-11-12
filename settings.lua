@@ -1,7 +1,7 @@
 -- user config
 
 local _, addonData = ...
-local L = LibStub("AceLocale-3.0"):GetLocale("SteaSummonForever")
+local L = LibStub("AceLocale-3.0"):GetLocale("SummonSirForever")
 
 -- defaults
 

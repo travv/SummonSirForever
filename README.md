@@ -1,17 +1,18 @@
-<p align="center"><img src="./img/logo-256.png" alt="SteaSummonForever logo" width="200"/></p>
+# SummonSirForever
 
-# SteaSummonForever
+A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever](https://github.com/edualve/SteaSummonForever) (MIT).
 
-## travv fork: summon service edition
+## Summon service features
 
-This fork turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
+SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w1). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w2). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
-1. Download the zip from the [latest release](https://github.com/travv/SteaSummonForever/releases/latest).
-2. Extract it into `_forever_\Interface\AddOns\`. You should end up with `AddOns\SteaSummonForever\SteaSummonForever.toc`.
+1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
+2. Extract it into `_forever_\Interface\AddOns\`. You should end up with `AddOns\SummonSirForever\SummonSirForever.toc`.
 3. Fully restart WoW. A `/reload` is not enough for a new addon.
+4. Had SteaSummonForever installed? Delete that folder. The two can't run side by side.
 
 ### Roles
 Each window gets one role. Set it with `/sw role <role>`.
@@ -107,6 +108,10 @@ Each window gets one role. Set it with `/sw role <role>`.
 
 ---
 
+## Original SteaSummonForever README
+
+<p align="center"><img src="./img/logo-256.png" alt="SteaSummonForever logo" width="200"/></p>
+
 ***FAN UPDATE FOR WORLD OF WARCRAFT: FOREVER***
 
 WoW: Forever (Classic+) addon for warlock raid summoning
@@ -115,7 +120,7 @@ I am not the original author of this addon but was a huge fan so wanted to bring
 [Fan Update for Wrath by TheGeneticsGuy](https://github.com/TheGeneticsGuy/Unofficial_SteaSummon)
 
 ## Installing
-Download the release zip and extract it into your WoW: Forever `Interface\AddOns` folder as normal. The folder must be named `SteaSummonForever`.
+(For this fork, use the install steps at the top: the folder is `SummonSirForever`.)
 
 ## New
 
