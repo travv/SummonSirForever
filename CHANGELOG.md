@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-w24 (2026-11-12): no first reply by default
+
+- **The warlock no longer whispers back when someone asks for a summon.** The group invite that pops on their screen is the notification, and the ad already quoted the price. The same goes for the advertiser's "inv" invites. Replies still go out when nothing else happens: wrong destination, queue full, already here, AFK.
+- The first reply is still there under Options > Messages for anyone who wants it, rewritten without the price: "Invite sent, sir. Accept it, take the summon when it pops, and trade me on arrival."
+- The whisper that goes out when you actually cast reads "Summoning you now, sir. Accept it when it pops." The arrival reminder still names the amount, since that one is the invoice.
+- Saved copies of the earlier stock reply and cast whisper upgrade once; your own text is kept.
+
 ## 1.0.0-w23 (2026-11-12): fixes the broken w22
 
 - **w22 shipped with an empty TOC file and does not load. Do not use it.** w23 is w22 with the TOC restored. Nothing else changed.

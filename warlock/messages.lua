@@ -1,5 +1,7 @@
 -- Customer messages: 8 reply types, 5 SummonSir lines each plus a plain line.
--- House style (Travis, 2026-11-12): brief, "sir" once, no theatrics.
+-- House style (Travis, 2026-11-12): brief, "sir" once, no theatrics. The first
+-- reply is off by default (Travis, 2026-11-12): the invite popup is the
+-- notification, and the ad already quoted the price. It stays available.
 -- Each type can be random, a fixed line, custom text, or off. Plain mode swaps
 -- every type to its short serious line.
 -- Placeholders: {dest} {price} {lock} {asked} {pos} {ahead} {max}
@@ -17,15 +19,16 @@ M.ORDER = { "queued", "position", "full", "nearby", "wrongdest", "complete", "no
 
 M.TYPES = {
   queued = {
-    label = "First reply (price + invite)",
+    label = "First reply (off by default: the invite is the notification)",
+    defaultMode = "off",
     lines = {
-      "Summon to {dest} is {price}, sir. Invite sent: accept it and the summon within 2 min, pay by trade when you land.",
-      "{dest} for {price}, sir. Invite sent. Take the summon within 2 min and trade me on arrival.",
-      "On it, sir. {dest}, {price}. Accept the invite, then the summon within 2 min, and pay by trade when you land.",
-      "Coming right up, sir. {dest} is {price}. Invite sent, accept the summon within 2 min and trade on arrival.",
-      "Sure thing, sir. {dest} for {price}. Invite's out, accept the summon within 2 min, pay by trade when you arrive.",
+      "Invite sent, sir. Accept it, take the summon when it pops, and trade me on arrival.",
+      "You're invited, sir. Take the summon when it pops; pay by trade when you land.",
+      "On it, sir. Accept the invite, then the summon, and trade me at {dest}.",
+      "Invite's out, sir. Accept the summon when it pops and pay by trade on arrival.",
+      "Sure thing, sir. Accept the invite and the summon; trade me when you land.",
     },
-    plain = "Summon to {dest}: {price}. Invite sent. Accept the summon within 2 min and pay by trade on arrival.",
+    plain = "Invite sent. Accept it and take the summon when it pops. Pay by trade on arrival.",
   },
   position = {
     label = "Place in line (on joining, and when they ask again)",
@@ -109,7 +112,8 @@ M.TYPES = {
 -- per-type setting: { mode = "random" | "fixed" | "custom" | "off", line = n, custom = text }
 function M:setting(kind)
   W.db.msg = W.db.msg or {}
-  W.db.msg[kind] = W.db.msg[kind] or { mode = "random", line = 1, custom = "" }
+  local t = M.TYPES[kind]
+  W.db.msg[kind] = W.db.msg[kind] or { mode = (t and t.defaultMode) or "random", line = 1, custom = "" }
   return W.db.msg[kind]
 end
 

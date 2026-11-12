@@ -169,7 +169,9 @@ local function pageWarlock(parent)
     keyOut:SetText(bindingStatus(NEXT_BINDING, BIND_PATH_NEXT))
     svc.refresh(); plain.refresh()
     local saved = W.messages.last.queued
-    sample:SetText("Customers will get: " .. W.hex("fg", W.messages:text("queued") or "(off)"))
+    local reply = W.messages:text("queued")
+    sample:SetText(reply and ("First reply: " .. W.hex("fg", reply))
+      or (W.hex("fg", "No first reply: ") .. "the invite is the notification, and your ad quotes the price. Turn a reply on under Options > Messages."))
     W.messages.last.queued = saved
   end }
 end
