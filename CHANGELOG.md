@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-w22 (2026-11-12): one-line status on the clicker page
+
+- The clicker setup page's "hear it in the background" status fits on one line, so step 4 no longer crowds it.
+
 ## 1.0.0-w21 (2026-11-12): channel checkboxes, ad text per destination
 
 - **Ad channels are checkboxes.** The Ads tab and the advertiser setup page list every chat channel this character has joined, one checkbox each; tick the ones the ad should go to. The long channel line that wrapped into the text below it is gone. The list is still saved by channel name, so /ssf channels and the settings box keep working, and a channel you listed but have not joined shows in orange.

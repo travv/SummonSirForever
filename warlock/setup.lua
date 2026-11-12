@@ -219,7 +219,7 @@ local function pageClicker(parent)
       sndOut:SetText(W.hex("green", "On: sound plays even when another window has focus"))
       sndBtn:Hide()
     else
-      sndOut:SetText(W.hex("orange", "Off: this window goes silent whenever you click elsewhere"))
+      sndOut:SetText(W.hex("orange", "Off: silent while another window has focus"))
       sndBtn:Show()
     end
     snd.refresh()

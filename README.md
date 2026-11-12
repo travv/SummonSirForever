@@ -23,6 +23,8 @@ The window opens on the **Setup** tab the first time each character logs in. Pic
 | **Clicker** | anyone standing at the destination to click the portal | sound plays while the window is in the background (this is the cue), plus the optional Interact key setup |
 | **Advertiser** | a character parked in a city | which chat channels the ad posts to, with Join buttons for any you have not joined |
 
+<p align="center"><img src="./img/setup-clicker.png" alt="The clicker setup page: each check has a status line and a button" width="760"/></p>
+
 Every tab is visible to every role, so a clicker can read the ledger and the advertiser can watch the queue. Rerun setup any time from the Setup tab or `/ssf setup`.
 
 ## How a sale works
@@ -49,7 +51,7 @@ Every tab is visible to every role, so a clicker can read the ledger and the adv
 - **Options** opens the settings page.
 
 ### Ads
-<p align="center"><img src="./img/ads.png" alt="The Ads tab: channels, sync state, the ad as it will read, Post ad" width="760"/></p>
+<p align="center"><img src="./img/ads.png" alt="The Ads tab: channel checkboxes, sync state, the ad as it will read, Post ad" width="760"/></p>
 
 - One checkbox per chat channel this character has joined: tick the ones the ad goes to (default: General, Trade, Services, LookingForGroup). Then the sync state with the warlock, and the ad exactly as it will read.
 - **Post ad** posts once to each channel, then counts down the cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the warlock's destination and price have synced (group with them, or set their name in Setup).
