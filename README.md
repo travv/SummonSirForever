@@ -2,7 +2,110 @@
 
 # SteaSummonForever
 
-> **travv fork.** This copy adds a summon-service layer (payment ledger, stats, never-paid blocklist, destination matching, clicker portal alert, Services-channel ads) in `warlock/`. See CHANGELOG 1.0.0-w1 and `/sw` in game. Original credits below are unchanged.
+## travv fork: summon service edition
+
+This fork turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
+
+> Not tested in game yet (v1.0.0-w1). Turn on `/console scriptErrors 1` and open an issue with any error text.
+
+### Install (3 min)
+1. Download the zip from the [latest release](https://github.com/travv/SteaSummonForever/releases/latest).
+2. Extract it into `_forever_\Interface\AddOns\`. You should end up with `AddOns\SteaSummonForever\SteaSummonForever.toc`.
+3. Fully restart WoW. A `/reload` is not enough for a new addon.
+
+### Roles
+Each window gets one role. Set it with `/sw role <role>`.
+
+| Role | Who | What it does |
+|---|---|---|
+| `warlock` | the summoner (default for warlocks) | Replies to customers, invites them, queues them, and keeps the ledger |
+| `clicker` | portal clickers (default for everyone else) | Shows a big alert when the portal is up |
+| `advertiser` | a character in a city | Shows a one-click **Post ad** button for the Services channel |
+
+### Features
+**Payment ledger**
+- A trade counts as a payment only when your gold actually goes up by what the customer offered. Forever has no "trade complete" event, so this is how it knows.
+- A cancelled trade, or one with items only, logs nothing.
+- Each payment links to that customer's latest summon from the last 30 minutes.
+
+**Stats panel**
+- Open it with `/sw` or the `$` button on the summon window.
+- It shows this session's summons, gold, gold per hour and % paid.
+- It also shows the last 7 days and weeks starting Monday.
+- `/sw today` prints today hour by hour in chat.
+
+**Never-paid list and timed blocklist**
+- A customer who arrived and still hasn't paid after 10 minutes goes on the Never paid list, which has **Paid** and **Block** buttons.
+- They are also blocked for 24h automatically. If they pay later, the block lifts.
+- Blocked players get no reply, no invite and no queue spot.
+- Manual control: `/sw block <name> 7d`, `/sw unblock <name>`, `/sw blocklist`.
+
+**Destinations and typo-tolerant requests**
+- About 50 presets: capitals, dungeons, raids and towns.
+- "wtb sumon tb", "orgrimar?" and "summon to thunder bluf" are all understood.
+- If someone asks for a different place than yours, they get a polite reply instead of an invite.
+
+**Whisper flow (warlock role)**
+- Anyone who whispers a request gets your price once, plus an invite.
+- They're added to the queue as soon as they join.
+- A full party turns into a raid automatically.
+- "Thanks for the summon" is never treated as a new order.
+
+**Stable queue rows**
+- Rows don't shift while your mouse is over the list, so you don't click the wrong person.
+- A row stuck on "pending" with no cast going returns to "requested" after 15 seconds.
+
+**Clicker alert**
+- When the portal goes up, clicker windows show **PORTAL UP: press [your Interact key]**, play a sound and flash the taskbar.
+- You still press the key yourself.
+
+**Services-channel ads**
+- One post per click, with the original cooldown.
+- The ad text is a template: `{dest} summons {price}! /w {lock} 123`.
+- While grouped, the warlock keeps the advertiser's destination, price and name up to date.
+
+**Fixes to the original**
+- The Next keybind now marks the row pending and announces the summon.
+- Several Forever API fixes: bag APIs, chat sends, group checks.
+- Summon phrases ignore case and punctuation ("123!", "Summon Plz").
+
+### Quick setup
+**Warlock (2 min)**
+1. `/sw dest tb` sets where you summon to (`/sw dest list` shows all presets).
+2. `/sw price 1g` sets the default. `/sw price 80s org` sets a price for one destination.
+
+**Clickers (1 min each)**
+1. Run `/console SoftTargetInteract 3`.
+2. Bind **Interact With Target** in Key Bindings > Targeting.
+3. Run `/sw testportal` to check the banner shows your key.
+
+**Advertiser (1 min)**
+1. Join the Services channel.
+2. Group with the warlock so the ad text syncs. Otherwise set it by hand with `/sw lock <warlock name>`, `/sw dest` and `/sw price`.
+3. Click **Post ad** for each post.
+
+### Commands
+| Command | Does |
+|---|---|
+| `/sw` | Ledger panel |
+| `/sw role warlock\|clicker\|advertiser` | Set this window's role |
+| `/sw dest <name>` / `dest list` / `dest clear` | Destination for ads and replies |
+| `/sw price <amount> [dest]` | Price, e.g. `80s`, `1g`, `1g50s` |
+| `/sw block <name> [30m\|24h\|7d\|perm]` / `unblock` / `blocklist` | Blocklist |
+| `/sw paid <name> [amount]` | Mark a summon paid by hand |
+| `/sw today` | Today's summons and gold by hour |
+| `/sw service on\|off` | Turn the warlock's auto-reply and invites on or off |
+| `/sw reply <text>` | The first whisper customers get (`{dest}`, `{price}`) |
+| `/sw adtext <template>` / `channel <name>` / `lock <name>` | Ad text, ad channel, warlock name in ads |
+| `/sw testportal` | Preview the clicker banner |
+
+### Ground rules
+- Nothing here presses keys, clicks, or keeps you online.
+- Ads go out only when you click.
+- The addon only whispers people who whispered you first.
+- Data is saved per WoW account in `SteaWarlockDB`. The original per-character settings are untouched.
+
+---
 
 ***FAN UPDATE FOR WORLD OF WARCRAFT: FOREVER***
 
