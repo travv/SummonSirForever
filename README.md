@@ -20,7 +20,7 @@ The window opens on the **Setup** tab the first time each character logs in. Pic
 | Role | Who | The setup page checks |
 |---|---|---|
 | **Warlock** | the character that casts Ritual of Summoning | destination, price, that your **Summon Next** key is bound |
-| **Clicker** | anyone standing at the destination to click the portal | soft interact is on, **Interact With Target** is bound, sound plays in the background |
+| **Clicker** | anyone standing at the destination to click the portal | sound plays while the window is in the background (this is the cue), plus the optional Interact key setup |
 | **Advertiser** | a character parked in a city | which chat channels the ad posts to, with Join buttons for any you have not joined |
 
 Every tab is visible to every role, so a clicker can read the ledger and the advertiser can watch the queue. Rerun setup any time from the Setup tab or `/ssf setup`.
@@ -28,8 +28,8 @@ Every tab is visible to every role, so a clicker can read the ledger and the adv
 ## How a sale works
 1. A player whispers the warlock anything like "123", "summon tb" or "wtb sumon pls" (typos are fine). They get one reply with the price and an invite. People who ask for the wrong city get a polite no instead.
 2. When they join the group they appear on the **Queue** tab with their place in line. The first person waiting is marked **NEXT** in green.
-3. Press your **Summon Next** key, the Next button, or the big Summon Next button. The row turns to **Casting**, the group hears who is coming, and every clicker window shows a **PORTAL UP** banner with their Interact key, a sound and a draining 30-second bar.
-4. The clickers press Interact. The row reads **Portal up**, then **Arrived** when the customer takes it.
+3. Press your **Summon Next** key, the Next button, or the big Summon Next button. The row turns to **Casting**, the group hears who is coming, and **every clicker window plays the raid-warning sound and shows a PORTAL UP banner** with a 30-second bar. The sound is the cue to look at that window.
+4. The clickers click the portal (or press Interact With Target if they set that up). The row reads **Portal up**, then **Arrived** when the customer takes it.
 5. The customer trades you. The payment lands in the ledger with a coin sound and one "paid:" line in chat. If they arrive and do not pay within 10 minutes they go on the never-paid list and are blocked for 24 hours (paying later lifts it).
 
 ## The tabs
@@ -61,7 +61,7 @@ The walkthrough described above. Leaving the tab counts as done.
 
 ## Also on screen
 - **Big Summon Next button** (warlock): who is next, how many are in line, your shards, your keybind. Turns green while casting, red when out of shards, "Life Tap" when low on mana. Clear empties the queue (asks first).
-- **PORTAL UP banner** (clickers): the Interact key to press, who is being summoned, a bar that drains while the portal is up.
+- **PORTAL UP banner** (clickers): the raid-warning sound plays whenever the warlock starts a summon, so a clicker running several windows knows which one to look at. The banner names who is being summoned, shows a bar that drains while the portal is up, and names your Interact key if you bound one. Turn on "hear it in the background" on the Setup tab so the sound plays while another window has focus. Soft interact (Interact With Target reaching the portal) is optional and did not work reliably for us; clicking the portal is fine.
 - **Chat:** one "SummonSir:" line for each payment, drop, and ignored (blocked) whisper. A ping when someone joins the queue, the coin sound on payment; both are toggles.
 
 ## Settings
