@@ -7,7 +7,7 @@
 </p>
 
 <p align="center"><b>One window, four tabs, the whole crew.</b><br>
-The warlock casts, the clickers click the portal, the advertiser posts in the city. Every character sees every tab.</p>
+The warlock casts, the clickers click the portal, the advertiser posts in the city and invites whoever whispers back. Every character sees every tab.</p>
 
 <table align="center">
   <tr>
@@ -35,7 +35,7 @@ The window opens on the **Setup** tab the first time each character logs in. Pic
 |---|---|---|
 | **Warlock** | the character that casts Ritual of Summoning | destination, price, your **Summon Next** key |
 | **Clicker** | anyone at the destination to click the portal | sound plays in the background (the cue), the optional Interact key |
-| **Advertiser** | a character parked in a city | which channels the ad posts to, one checkbox each |
+| **Advertiser** | a character parked in a city, in the warlock's raid | which channels the ad posts to (one checkbox each), the main warlock's name |
 
 <table align="center">
   <tr>
@@ -50,11 +50,13 @@ Rerun it any time from the Setup tab or `/ssf setup`.
 ## How a sale works
 <p align="center"><i>[placeholder: Queue tab with people in line, NEXT marker, Casting / Portal up / Arrived status words]</i></p>
 
-1. A player whispers the warlock "123", "summon sm" or "wtb sumon pls" (typos are fine). They get a group invite, nothing else: the invite is the notification and your ad already quoted the price. People who ask for the wrong place get a short reply instead.
-2. When they join they appear on the **Queue** tab. The first person waiting is marked **NEXT** in green.
+1. The advertiser posts the ad in the city. A player whispers the advertiser "inv" (or "123", "summon sm", "wtb sumon pls": typos are fine) and the advertiser invites them into the warlock's raid. The invite is the whole reply: the ad already quoted the price. People who ask for the wrong place get a short line instead. Whispering the warlock directly works the same way.
+2. When they join the raid they appear on the **Queue** tab on every window. The first person waiting is marked **NEXT** in green.
 3. Press your **Summon Next** key, the Next button, or the big Summon Next button. They get "Summoning you now, sir.", the row reads **Casting**, and every clicker window plays the raid-warning sound and shows a **PORTAL UP** banner with a 30 second bar.
 4. The clickers click the portal. The row reads **Portal up**, then **Arrived**.
 5. The customer trades you. Any amount counts (a discount is still a payment): coin sound, one "paid:" line in chat, ledger updated. No payment within 10 minutes puts them on the never-paid list and blocks them for 24 hours; paying later lifts it.
+
+The advertiser needs invite rights, and the warlock hands them out: group the advertiser with the warlock and the warlock converts the party to a raid and promotes the advertiser to assistant on its own. An advertiser that is not in the raid cannot invite, so it answers "inv" by pointing the player at the warlock by name instead.
 
 ## The tabs
 
@@ -62,7 +64,7 @@ Rerun it any time from the Setup tab or `/ssf setup`.
 
 **Ledger.** <i>[placeholder: ledger after a session, with gold per hour and an open tab]</i> The session in large type: summons, gold, gold per hour, percent paid. **Open tabs** lists everyone who arrived and has not paid, with **Paid** (mail, a friend paid, a comp) and **Block** buttons; red past the grace time. Then 7 days and 8 weeks of history. **Options** opens the settings.
 
-**Ads.** One checkbox per chat channel this character has joined (default General, Trade, Services, LookingForGroup). The ad as it will read, then **Post ad**: once to each checked channel, then a cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the destination and price have synced.
+**Ads.** One checkbox per chat channel this character has joined (default General, Trade, Services, LookingForGroup). The ad as it will read, then **Post ad**: once to each checked channel, then a cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the destination and price have synced from the warlock (automatic when grouped, otherwise by whisper to the name on the Setup tab).
 
 Default ad: `WTS summon {dest} {price}. {blurb} PST "inv" {spell}`. `{blurb}` fits the spot (Scarlet Monastery: "Skip the run through Tirisfal.", Booty Bay: "Flight path, neutral AH, Stranglethorn quests."), `{spell}` is the clickable [Ritual of Summoning] link.
 
@@ -80,7 +82,8 @@ Short, "sir" once, no exclamation points. Sent only to people who whispered you 
 
 | When | Default |
 |---|---|
-| Someone asks | invite only (optional reply under Options > Messages) |
+| Someone whispers "inv" (advertiser or warlock) | invite only (optional reply under Options > Messages) |
+| Someone whispers an advertiser that is not in the raid | "Whisper {lock} 123 for a summon to {dest}, sir ({price})." |
 | You cast | "Summoning you now, sir." |
 | They land | nothing (optional reminder: a checkbox on the warlock setup page) |
 | Wrong place, queue full, already here, AFK | one short line |
