@@ -41,12 +41,16 @@ Every tab is visible to every role, so a clicker can read the ledger and the adv
 - An empty queue says so. Customers who leave the group are dropped at once; customers offline for 5 minutes are dropped (setting).
 
 ### Ledger
+<p align="center"><img src="./img/ledger.png" alt="The Ledger tab: session headline, history, open tabs" width="760"/></p>
+
 - The session headline in large type: summons, gold, gold per hour, percent paid.
 - **Open tabs:** everyone who arrived and has not paid yet, with **Paid** (mail, a friend paid, a comp) and **Block** buttons. Past the grace time the row turns red and reads "never paid".
 - Last 7 days and the last 8 weeks (Monday to Sunday), scrolling.
 - **Options** opens the settings page.
 
 ### Ads
+<p align="center"><img src="./img/ads.png" alt="The Ads tab: channels, sync state, the ad as it will read, Post ad" width="760"/></p>
+
 - Shows which channels the ad posts to (default: General, Trade, Services, LookingForGroup; names work on every character, numbers like `1, 2, 8` differ per character), the sync state with the warlock, and the ad exactly as it will read.
 - **Post ad** posts once to each channel, then counts down the cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the warlock's destination and price have synced (group with them, or set their name in Setup).
 - Default ad: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" {spell}`. `{spell}` is a clickable [Ritual of Summoning] link.
