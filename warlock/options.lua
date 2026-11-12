@@ -249,6 +249,12 @@ function O:build()
             get = function() return db().graceMinutes end,
             set = function(_, v) db().graceMinutes = v; changed() end,
           },
+          offlineMinutes = {
+            order = 1.5, type = "range", name = "Drop offline customers after (minutes)", min = 0, max = 60, step = 1,
+            desc = "A queued customer who stays logged off this long leaves the queue. 0 keeps them. Leaving the group always drops them.",
+            get = function() return db().offlineMinutes or 0 end,
+            set = function(_, v) db().offlineMinutes = v; changed() end,
+          },
           autoBlock = {
             order = 2, type = "toggle", name = "Auto-block never-paid customers",
             desc = "Paying later lifts the block automatically.",

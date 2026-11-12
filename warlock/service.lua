@@ -13,6 +13,7 @@ local ConvertToRaid = (C_PartyInfo and C_PartyInfo.ConvertToRaid) or ConvertToRa
 local V = {
   pendingJoin = {},  -- name -> time invited
   pendingSince = {}, -- name -> GetTime() a row went "pending"
+  offlineSince = {}, -- name -> GetTime() a row went "offline"
   shardWarned = {},  -- name -> true once told we're out of shards
   outOfShards = false,
   JOIN_WINDOW = 180,
@@ -217,6 +218,38 @@ function V:watchdog()
   end
   for name in pairs(self.pendingSince) do
     if not seen[name] then self.pendingSince[name] = nil end
+  end
+  self:dropGone(summon, now)
+end
+
+-- Customers who logged off or left the group used to sit in the queue
+-- forever ("offline", 1 hr) because only a warlock at the destination had an
+-- X. Left the group = gone now; offline = gone after offlineMinutes.
+function V:dropGone(summon, now)
+  local limit = (W.db.offlineMinutes or 0) * 60
+  local drop = {}
+  local stillOffline = {}
+  for _, rec in ipairs(summon.waiting) do
+    local name, status = rec[1], rec[3]
+    if name ~= W.me() then
+      if IsInGroup(LE_PARTY_CATEGORY_HOME) and not self:inGroup(name) then
+        table.insert(drop, { name, "left the group" })
+      elseif status == "offline" and limit > 0 then
+        stillOffline[name] = true
+        self.offlineSince[name] = self.offlineSince[name] or now
+        if now - self.offlineSince[name] >= limit then
+          table.insert(drop, { name, "offline " .. W.db.offlineMinutes .. " min" })
+        end
+      end
+    end
+  end
+  for name in pairs(self.offlineSince) do
+    if not stillOffline[name] then self.offlineSince[name] = nil end
+  end
+  for _, d in ipairs(drop) do
+    self.offlineSince[d[1]] = nil
+    W.print("dropped", d[1], "from the queue:", d[2])
+    addonData.gossip:arrived(d[1], true)
   end
 end
 

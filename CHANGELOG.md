@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-w12 (2026-11-11): layout fixes from the first w11 screenshots, stuck offline customers
+
+- **Header text no longer sits under the portrait circle.** Location and Destination start to the right of it. The ledger and setup windows drop the portrait altogether (it covered their first line).
+- **Why "Ur Momsman" was stuck for an hour:** he logged off while queued. The addon kept him as "offline" and only a warlock standing at the destination had an X, so nobody on the team could remove him. Now:
+  - every character running the addon in the group sees the X on every row (and always on their own);
+  - the warlock drops anyone who left the group right away, and anyone offline for longer than the new **Drop offline customers after** setting (default 5 minutes, 0 keeps them). A chat line says who was dropped and why.
+- Ledger shows "Never paid: nobody so far" instead of an empty box.
+
 ## 1.0.0-w11 (2026-11-11): stock Forever look, usability pass
 
 Travis's call after seeing w10 in game: drop the custom palette and use the game's own styling. Every window now sits on the stock templates.

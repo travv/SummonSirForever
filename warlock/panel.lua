@@ -19,7 +19,7 @@ local function dim(text) return W.hex("comment", text) end
 function UI:build()
   if self.frame then return self.frame end
   local listH = 30 + UI.ROWS * 22 + 8 -- never-paid heading + rows
-  local f = W.stockWindow("SteaWarlockPanel", UIParent, 380, 500, "Summon ledger", "Interface/ICONS/INV_Misc_Coin_02")
+  local f = W.stockWindow("SteaWarlockPanel", UIParent, 380, 500, "Summon ledger") -- no portrait: it hid the first line
   f:SetPoint("CENTER", UIParent, "CENTER", 260, 0)
   f:SetFrameStrata("DIALOG")
   table.insert(UISpecialFrames, "SteaWarlockPanel") -- Escape closes it
@@ -132,7 +132,7 @@ function UI:refresh()
   f.body:SetText(self:bodyText(now))
 
   local np = W.stats.neverPaid(W.db.summons, UI.ROWS)
-  f.npTitle:SetText(#np > 0 and "Never paid" or "")
+  f.npTitle:SetText(#np > 0 and "Never paid" or dim("Never paid: nobody so far"))
   for i = 1, UI.ROWS do
     local r, s = UI.rows[i], np[i]
     if s then

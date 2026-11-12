@@ -98,6 +98,7 @@ W.DEFAULTS = {
   bigScale = 1,
   msg = {},               -- message type -> { mode, line, custom } (messages.lua)
   graceMinutes = 10,      -- unpaid this long after arriving = never paid
+  offlineMinutes = 5,     -- warlock: a queued customer offline this long is dropped (0 = keep)
   autoBlock = true,       -- block never-paid customers automatically
   autoBlockHours = 24,
   alertSound = true,      -- clicker banner plays a sound

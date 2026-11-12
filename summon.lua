@@ -70,7 +70,7 @@ local summon = {
     if SteaSummonFrame and not SteaSummonFrame.location then
       -- header line 1, left: where the warlock stands (shared text: counts sit to its right)
       SteaSummonFrame.location = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-      SteaSummonFrame.location:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 14, -27)
+      SteaSummonFrame.location:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 62, -27) -- right of the portrait
       SteaSummonFrame.location:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -160, 0)
       SteaSummonFrame.location:SetJustifyH("LEFT")
       SteaSummonFrame.location:SetWordWrap(false)
@@ -80,7 +80,7 @@ local summon = {
     if SteaSummonFrame and not SteaSummonFrame.destination then
       -- header line 2, left: where summons go (click to set / unset)
       SteaSummonFrame.destination = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-      SteaSummonFrame.destination:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 14, -46)
+      SteaSummonFrame.destination:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 62, -46)
       SteaSummonFrame.destination:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -92, 0)
       SteaSummonFrame.destination:SetJustifyH("LEFT")
       SteaSummonFrame.destination:SetWordWrap(false)
@@ -810,7 +810,7 @@ local summon = {
         end
 
         local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", f)
-        invdest:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -44)
+        invdest:SetPoint("TOPLEFT", f, "TOPLEFT", 58, -44)
         invdest:SetPoint("TOPRIGHT", f, "TOPRIGHT", -90, -44)
         invdest:SetHeight(18)
         invdest:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
@@ -1568,7 +1568,10 @@ local summon = {
     if enable then
       if not InCombatLockdown() then
         addonData.buttons[idx].Button:Show()
-        if player == self.me or ((self:isAtDestination() or self.zone == "") and addonData.util:playerCanSummon()) then
+        -- upstream showed the X only to a warlock standing at the destination.
+        -- Our clickers and advertiser manage the same queue, so anyone running
+        -- this addon in the group may remove a row (and always themselves).
+        if player == self.me or addonData.util:playerCanSummon() or (addonData.W and addonData.W.role()) then
           addonData.buttons[idx].Cancel:Show()
         else
           addonData.buttons[idx].Cancel:Hide()

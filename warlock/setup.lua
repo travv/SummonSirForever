@@ -251,7 +251,7 @@ end
 
 function U:build()
   if self.frame then return self.frame end
-  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 380, "SummonSir setup", "Interface/ICONS/Spell_Shadow_Twilight")
+  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 380, "SummonSir setup") -- no portrait: it covered the step text
   f:SetPoint("CENTER")
   f:SetFrameStrata("DIALOG")
   table.insert(UISpecialFrames, "SummonSirSetup")
