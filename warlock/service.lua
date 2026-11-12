@@ -104,8 +104,7 @@ function V:onChat(event, msg, player)
   if not isReq then return false end
 
   if role == "advertiser" then
-    M():send(player, "advertiser", nil, self.REPLY_EVERY)
-    return true
+    return self:advertiserRequest(player, asked)
   end
   if role ~= "warlock" or not W.db.service then return false end
 
@@ -148,6 +147,38 @@ function V:onChat(event, msg, player)
     return true
   end
 
+  M():send(player, "queued", nil, self.REPLY_EVERY)
+  self:invite(player)
+  return true
+end
+
+-- advertiser with invite rights in the warlock's group: reply, invite, and
+-- queue them with the warlock once they join. Otherwise point them at the warlock.
+function V:canInvite()
+  if not IsInGroup() then return false end
+  local ok, can = pcall(C_PartyInfo.CanInvite)
+  return ok and can and true or false
+end
+
+function V:advertiserRequest(player, asked)
+  local destKey = W.destKey()
+  if asked and destKey and asked.key ~= destKey then
+    M():send(player, "wrongdest", { asked = asked.name }, self.REPLY_EVERY)
+    return true
+  end
+  if not W.db.service or not self:canInvite() then
+    M():send(player, "advertiser", nil, self.REPLY_EVERY)
+    return true
+  end
+  if self:inGroup(player) then
+    if not self:position(player) then addonData.gossip:add(player, true) end
+    return true
+  end
+  if self.pendingJoin[player] then return true end
+  if self:queueFull() then
+    M():send(player, "full", nil, 120)
+    return true
+  end
   M():send(player, "queued", nil, self.REPLY_EVERY)
   self:invite(player)
   return true

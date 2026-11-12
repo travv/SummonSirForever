@@ -300,11 +300,11 @@ function O:build()
       adGroup = {
         order = 50, type = "group", inline = true, name = "Ads",
         args = {
-          adChannel = {
-            order = 1, type = "input", name = "Ad channel", width = "normal",
-            desc = "Name or start of the name, e.g. Services. You have to have joined it.",
-            get = function() return db().adChannel end,
-            set = function(_, v) if v ~= "" then db().adChannel = v; changed() end end,
+          adChannels = {
+            order = 1, type = "input", name = "Ad channels", width = "normal",
+            desc = "Your chat channel numbers (1, 2, 8) or names (General, Trade, Services), comma separated. One click posts the ad once to each one you've joined.",
+            get = function() return db().adChannels end,
+            set = function(_, v) if v ~= "" then db().adChannels = v; changed() end end,
           },
           adCooldown = {
             order = 2, type = "range", name = "Minutes between ads", min = 1, max = 30, step = 1,
@@ -317,19 +317,25 @@ function O:build()
             set = function(_, v) if v ~= "" then db().adTemplate = v; changed() end end,
           },
           lockName = {
-            order = 4, type = "input", name = "Warlock name in ads (advertiser)", width = "normal",
-            desc = "Set automatically while you're grouped with the warlock.",
+            order = 4, type = "input", name = "Main warlock's name (advertiser)", width = "normal",
+            desc = "Fills in by itself from the warlock's addon. Typing it lets the advertiser sync by whisper even when you're not grouped.",
             get = function() return db().lockName or "" end,
             set = function(_, v) db().lockName = (v ~= "" and v or nil); changed() end,
           },
           adPreview = {
             order = 5, type = "description",
             name = function()
-              local _, chan = W.ads:channel()
-              return placeholders("{dest} {price} {lock}") .. "\n" .. W.hex("purple", "Preview: ") .. W.ads:text()
-                .. "\n" .. (chan and W.hex("green", "Channel joined: " .. chan)
-                  or W.hex("orange", "Not in a channel called " .. db().adChannel .. " yet"))
-                .. "\n" .. W.hex("comment", "Ads only go out when you click Ad or Post ad.")
+              local sync = ""
+              if W.role() == "advertiser" then
+                local age = db().remoteAt and (W.now() - db().remoteAt)
+                sync = "\n" .. ((age and age < 120)
+                  and W.hex("green", "Synced with " .. tostring(db().lockName) .. ": " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
+                  or W.hex("orange", "Not synced with the main warlock yet. Group with them, or type their name above."))
+              end
+              return placeholders("{dest} {price} {lock} {spell} (the [Ritual of Summoning] link)")
+                .. "\n" .. W.hex("purple", "Preview: ") .. W.ads:text()
+                .. "\n" .. "Posts to: " .. W.ads:channelSummary() .. sync
+                .. "\n" .. W.hex("comment", "Ads only go out when you click Ad or Post ad: one click, once per channel.")
             end,
           },
         },

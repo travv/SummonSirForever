@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-w9 (2026-11-11): advertiser works like Travis's macro
+
+- **One Post ad click posts the ad once to each listed channel.** The default list is `1, 2, 8`, as numbers or names (`/sw channels`). There is still one cooldown per round and nothing on a timer.
+- **New default ad** with a `{spell}` link: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" [Ritual of Summoning]`. The old default ads upgrade automatically, and a customized single channel carries over.
+- **The ad follows the main warlock's position.** The warlock sends its destination name and price (preset, else the summon window's destination, else its zone) on every change, zone change and group change. The advertiser asks every 30s, by whisper if ungrouped. The advertiser never advertises its own city.
+- **The advertiser invites and queues** "inv" whispers when it has invite rights (`C_PartyInfo.CanInvite`). The customer joins the warlock's queue. The warlock auto-promotes known advertisers to assist and converts a party to a raid. Without rights, the advertiser falls back to the redirect reply.
+
 ## 1.0.0-w8 (2026-11-11): no addon tag on messages
 
 - Messages no longer start with `[SummonSir]`. Whispers, raid/say notices and nags go out exactly as written.

@@ -119,20 +119,71 @@ function P:onComm(prefix, msg, dist, sender)
   elseif cmd == "down" then
     self:hideBanner()
   elseif cmd == "cfg" then
-    -- warlock -> advertiser: what the ads should say
+    -- warlock -> advertiser: where the warlock summons to and for how much
     if role == "advertiser" then
-      local dest, price, lock = f[1], tonumber(f[2]), f[3]
-      if dest and dest ~= "" then W.db.dest = dest end
-      if price then W.db.price = price; W.db.prices = {} end
-      if lock and lock ~= "" then W.db.lockName = lock end
-      W.fire("CONFIG_CHANGED", "remote")
+      P.applyConfig(f, W.shortName(sender))
+    end
+  elseif cmd == "cfgreq" then
+    -- advertiser -> warlock: "what should my ad say?" (works ungrouped too)
+    if role == "warlock" then
+      P.advertisers[W.shortName(sender)] = true
+      P:sendConfig(W.shortName(sender))
+      P:promoteAdvertisers()
     end
   end
 end
 
-function P:sendConfig()
+-- cfg payload: destKey + price + warlock name + destination name
+function P.configPayload()
+  return string.format("cfg %s+%d+%s+%s", clean(W.destKey() or ""), W.priceFor(W.destKey()),
+    clean(W.me()), clean(W.destName()))
+end
+
+function P.applyConfig(f, sender)
+  local key, price, lock, destName = f[1], tonumber(f[2]), f[3], f[4]
+  W.db.dest = (key and key ~= "") and key or nil
+  if price then W.db.remotePrice = price end
+  if destName and destName ~= "" then W.db.remoteDest = destName end
+  W.db.lockName = (lock and lock ~= "") and lock or sender or W.db.lockName
+  W.db.remoteAt = W.now()
+  W.fire("CONFIG_CHANGED", "remote")
+end
+
+-- to the group, or to one advertiser by whisper
+function P:sendConfig(to)
   if W.role() ~= "warlock" then return end
-  self:send(string.format("cfg %s+%d+%s", clean(W.db.dest or ""), W.priceFor(W.db.dest), clean(W.me())))
+  local msg = P.configPayload()
+  if to then
+    self:SendCommMessage(self.PREFIX, msg, "WHISPER", to)
+  else
+    self:send(msg)
+  end
+end
+
+-- advertisers need invite rights: in a raid, assist; a party is made a raid first
+P.advertisers = {}
+function P:promoteAdvertisers()
+  if not UnitIsGroupLeader("player") or InCombatLockdown() then return end
+  local any = false
+  for name in pairs(P.advertisers) do
+    if UnitInParty(name) or UnitInRaid(name) then
+      any = true
+      if IsInRaid() and not UnitIsGroupAssistant(name) then
+        C_PartyInfo.PromoteToAssistant(name)
+      end
+    end
+  end
+  if any and not IsInRaid() then C_PartyInfo.ConvertToRaid() end
+end
+
+-- advertiser: ask the warlock (group if grouped, else whisper the saved name)
+function P:requestConfig()
+  if W.role() ~= "advertiser" then return end
+  if IsInGroup() then
+    self:send("cfgreq")
+  elseif W.db.lockName and W.db.lockName ~= "" then
+    self:SendCommMessage(self.PREFIX, "cfgreq", "WHISPER", W.db.lockName)
+  end
 end
 
 W.module("portal", P)
@@ -157,7 +208,16 @@ function P:init()
     C_Timer.After(5, function() pending = false; P:sendConfig() end)
   end
   W.on("CONFIG_CHANGED", function(source) if source ~= "remote" then soon() end end)
-  W.on("GROUP_ROSTER_UPDATE", soon)
+  W.on("GROUP_ROSTER_UPDATE", function()
+    soon()
+    C_Timer.After(2, function() P:promoteAdvertisers() end)
+    C_Timer.After(2, function() P:requestConfig() end)
+  end)
+  -- the warlock moving changes the ad when no preset destination is set
+  W.on("ZONE_CHANGED_NEW_AREA", soon)
+  hooksecurefunc(addonData.summon, "setDestination", soon)
+  W.on("WARLOCK_READY", function() C_Timer.After(5, function() P:requestConfig() end) end)
+  C_Timer.NewTicker(30, function() P:requestConfig() end)
 
   W.command("testportal", "testportal: show the clicker banner here for 5 seconds", function()
     P:showBanner("Test Customer", W.destName())

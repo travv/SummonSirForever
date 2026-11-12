@@ -52,8 +52,9 @@ W.DEFAULTS = {
   autoBlock = true,       -- block never-paid customers automatically
   autoBlockHours = 24,
   alertSound = true,      -- clicker banner plays a sound
-  adChannel = "Services",
-  adTemplate = "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",
+  adChannel = "Services",  -- (pre-w9 single channel; adChannels replaces it)
+  adChannels = "1, 2, 8",  -- channel numbers or names; one click posts the ad to each
+  adTemplate = "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
   replyText = "Right away, sir! Summon to {dest} is {price}. Invite sent! Accept the summon within 2 min and pay by trade when you land!",
   wrongDestText = "So sorry, sir! I'm summoning to {dest} right now, not {asked}!",
   advertiserReplyText = "Right this way, sir! Whisper {lock} \"123\" for a summon to {dest} ({price})!",
@@ -65,7 +66,10 @@ W.DEFAULTS = {
 
 -- earlier stock wording: saved texts that still match get the new defaults
 W.STOCK = {
-  adTemplate = "{dest} summons {price}! /w {lock} 123",
+  adTemplate = {
+    "{dest} summons {price}! /w {lock} 123",
+    "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",
+  },
   replyText = "Summon to {dest}: {price}. Invite sent, accept the summon within 2 min. Pay by trade on arrival.",
   wrongDestText = "Sorry, I'm summoning to {dest} right now, not {asked}.",
   advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest} ({price}).",
@@ -73,7 +77,17 @@ W.STOCK = {
 
 function W.upgradeStock(db)
   for k, old in pairs(W.STOCK) do
-    if db[k] == old then db[k] = W.DEFAULTS[k] end
+    local olds = type(old) == "table" and old or { old }
+    for _, o in ipairs(olds) do
+      if db[k] == o then db[k] = W.DEFAULTS[k] end
+    end
+  end
+  -- a customized single ad channel carries over as the channel list
+  if not db.adChannelsMigrated then
+    if db.adChannel and db.adChannel ~= "" and db.adChannel ~= "Services" then
+      db.adChannels = db.adChannel
+    end
+    db.adChannelsMigrated = true
   end
   return db
 end
@@ -211,18 +225,47 @@ end
 -- price + destination lookups shared by replies, ads and the ledger
 ---------------------------------
 function W.priceFor(destKey)
+  -- an advertiser quotes whatever the main warlock charges
+  if W.role() == "advertiser" and W.db.remotePrice then
+    return W.db.remotePrice
+  end
   if destKey and W.db.prices[destKey] then
     return W.db.prices[destKey]
   end
   return W.db.price
 end
 
+-- where summons go. Warlock: the preset you picked, else the destination
+-- set on the summon window, else the zone you're standing in.
+-- Advertiser: always the main warlock's answer (synced), never its own city.
 function W.destName()
+  if W.role() == "advertiser" then
+    if W.db.remoteDest and W.db.remoteDest ~= "" then return W.db.remoteDest end
+    local p = addonData.destinations and addonData.destinations.byKey(W.db.dest)
+    return p and p.name or "?"
+  end
   local p = addonData.destinations and addonData.destinations.byKey(W.db.dest)
   if p then return p.name end
+  local S = addonData.summon
+  if S and S.zone and S.zone ~= "" then return S.zone end
   local zone = GetZoneText and GetZoneText() or ""
   if zone ~= "" then return zone end
   return "here"
+end
+
+-- preset key for the current destination (typed preset, else matched from the zone)
+function W.destKey()
+  if W.db.dest then return W.db.dest end
+  local D = addonData.destinations
+  local m = D and D.match(W.destName())
+  return m and m.key or nil
+end
+
+-- clickable [Ritual of Summoning] link for ads
+function W.spellLink()
+  local link = C_Spell and C_Spell.GetSpellLink and C_Spell.GetSpellLink(698)
+  if link and link ~= "" then return link end
+  return "\124cff71d5ff\124Hspell:698\124h[Ritual of Summoning]\124h\124r"
 end
 
 function W.lockName()
@@ -233,8 +276,9 @@ end
 function W.vars(extra)
   local v = {
     dest = W.destName(),
-    price = W.fmtMoney(W.priceFor(W.db.dest)),
+    price = W.fmtMoney(W.priceFor(W.destKey())),
     lock = W.lockName(),
+    spell = W.spellLink(),
   }
   for k, val in pairs(extra or {}) do v[k] = val end
   return v

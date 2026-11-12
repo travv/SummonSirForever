@@ -24,8 +24,63 @@ function A.findChannel(list, wanted)
   return nil
 end
 
+-- "1, 2, 8" or "General, Trade, Services": numbers are your chat channel
+-- numbers (/1, /2, /8), names match from the start of the channel name
+function A.parseChannels(text)
+  local out = {}
+  for token in string.gmatch(text or "", "[^,]+") do
+    token = string.gsub(token, "^%s+", "")
+    token = string.gsub(token, "%s+$", "")
+    if token ~= "" then table.insert(out, tonumber(token) or token) end
+  end
+  return out
+end
+
+-- each listed channel: { want, id, name } (id nil = not joined)
+function A:channels()
+  local list = { GetChannelList() }
+  local out = {}
+  for _, want in ipairs(A.parseChannels(W.db.adChannels)) do
+    local id, name
+    if type(want) == "number" then
+      for i = 1, #list do
+        if list[i] == want and type(list[i + 1]) == "string" then id, name = want, list[i + 1] end
+      end
+    else
+      id, name = A.findChannel(list, want)
+    end
+    table.insert(out, { want = want, id = id, name = name })
+  end
+  return out
+end
+
+-- joined channel ids to post to, in your order, no repeats
+function A:targets()
+  local ids, seen = {}, {}
+  for _, c in ipairs(self:channels()) do
+    if c.id and not seen[c.id] then seen[c.id] = true; table.insert(ids, c.id) end
+  end
+  return ids
+end
+
+function A:channelSummary()
+  local parts = {}
+  for _, c in ipairs(self:channels()) do
+    local label = tostring(c.want)
+    if c.id then
+      table.insert(parts, W.hex("green", label .. " " .. (c.name or "")))
+    else
+      table.insert(parts, W.hex("orange", label .. " (not joined)"))
+    end
+  end
+  return #parts > 0 and table.concat(parts, ", ") or W.hex("orange", "no channels listed")
+end
+
+-- old single-channel lookup, kept for callers that want the first joined one
 function A:channel()
-  return A.findChannel({ GetChannelList() }, W.db.adChannel)
+  local c = self:channels()
+  for _, x in ipairs(c) do if x.id then return x.id, x.name end end
+  return nil
 end
 
 function A:text()
@@ -77,7 +132,9 @@ function A:refresh()
   local f = self.frame
   if not f or not f:IsShown() then return end
   local _, chanName = self:channel()
-  f.label:SetText("Ad to " .. (chanName or (W.db.adChannel .. " (not joined)")))
+  local synced = W.db.remoteAt and (W.now() - W.db.remoteAt) < 120
+  f.label:SetText("Ad to " .. self:channelSummary()
+    .. (synced and "" or W.hex("orange", "   (not synced with the warlock)")))
   f.preview:SetText(self:text())
   local ready, remaining = addonData.chat:adReady()
   if ready then
@@ -110,12 +167,12 @@ function A:init()
     W.print("ad:", A:text())
     W.fire("CONFIG_CHANGED")
   end)
-  W.command("channel", "channel <name>: ad channel (default Services)", function(args)
-    if args ~= "" then W.db.adChannel = args end
-    local id, name = A:channel()
-    W.print("ad channel:", W.db.adChannel, id and ("joined as " .. id .. ". " .. name) or "(not joined)")
+  W.command("channels", "channels <1, 2, 8 or names>: where one Post ad click posts", function(args)
+    if args ~= "" then W.db.adChannels = args end
+    W.print("ad channels:", A:channelSummary())
     W.fire("CONFIG_CHANGED")
   end)
+  W.commands.channel = W.commands.channels -- old name
   W.command("lock", "lock <name>: warlock name for advertiser ads", function(args)
     if args ~= "" then W.db.lockName = args end
     W.print("warlock for ads:", W.lockName())

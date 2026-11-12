@@ -6,7 +6,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w8). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w9). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
@@ -90,10 +90,11 @@ Each window gets one role. Set it with `/sw role <role>`.
 - When the portal goes up, clicker windows show **PORTAL UP: press [your Interact key]**, play a sound and flash the taskbar.
 - You still press the key yourself.
 
-**Services-channel ads**
-- One post per click, with the original cooldown.
-- The ad text is a template. The default is `Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!`
-- While grouped, the warlock keeps the advertiser's destination, price and name up to date.
+**Ads (advertiser role)**
+- **One click on Post ad posts the ad once to each channel in your list.** The default list is `1, 2, 8`; numbers or names both work (`General, Trade, Services`). There is a cooldown between rounds, and nothing posts on its own.
+- Default ad: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" {spell}`. `{spell}` becomes a clickable **[Ritual of Summoning]** link.
+- **The ad follows the main warlock.** The warlock's addon sends its destination and price to the advertiser: the preset it picked, else the destination set on the summon window, else the zone it's standing in. It updates when the warlock moves. If they aren't grouped, typing the warlock's name lets them sync by whisper.
+- **"PST inv" works.** With assist in the warlock's raid, the advertiser replies, invites, and puts the customer in the warlock's queue once they join. The warlock gives the advertiser assist automatically (it converts a party to a raid if needed). Without invite rights, the advertiser points people at the warlock instead.
 
 **Fixes to the original**
 - The Next keybind now marks the row pending and announces the summon.
@@ -114,9 +115,9 @@ Every setting below is also on a **Summon service** page in **Settings > AddOns 
 3. Run `/sw testportal` to check the banner shows your key.
 
 **Advertiser (1 min)**
-1. Join the Services channel.
-2. Group with the warlock so the ad text syncs. Otherwise set it by hand with `/sw lock <warlock name>`, `/sw dest` and `/sw price`.
-3. Click **Post ad** for each post.
+1. Join your ad channels (the default list is 1, 2, 8; see `/sw channels`).
+2. Group with the main warlock. You get assist, and the ad follows the warlock's destination and price. Not grouped? Run `/sw lock <warlock name>`.
+3. Click **Post ad** once per round: it posts once to each channel.
 
 ### Commands
 | Command | Does |
@@ -136,7 +137,7 @@ Every setting below is also on a **Summon service** page in **Settings > AddOns 
 | `/sw setup` | Run the first-time setup again |
 | `/sw big on\|off\|reset` | Big Summon Next button |
 | `/sw clear` | Clear the whole queue (asks first) |
-| `/sw adtext <template>` / `channel <name>` / `lock <name>` | Ad text, ad channel, warlock name in ads |
+| `/sw adtext <template>` / `channels <1, 2, 8>` / `lock <name>` | Ad text, ad channels, main warlock's name |
 | `/sw testportal` | Preview the clicker banner |
 
 ### Ground rules

@@ -194,13 +194,13 @@ local function pageAdvertiser(parent)
   p:SetAllPoints()
   text(p, "GameFontNormalLarge", "purple", 0, 0):SetText("Advertiser setup")
 
-  text(p, "GameFontNormal", "cyan", 0, -34):SetText("Ad channel")
+  text(p, "GameFontNormal", "cyan", 0, -34):SetText("Ad channels (numbers or names)")
   local chanOut = text(p, "GameFontHighlight", "fg", 190, -54, 240)
   local chan = editBox(p, 0, -50, 170, function(v)
-    if v ~= "" then W.db.adChannel = v; W.fire("CONFIG_CHANGED") end
+    if v ~= "" then W.db.adChannels = v; W.fire("CONFIG_CHANGED") end
     U:refresh()
   end)
-  text(p, "GameFontNormal", "cyan", 0, -84):SetText("Warlock's name")
+  text(p, "GameFontNormal", "cyan", 0, -84):SetText("Main warlock's name")
   local lockOut = text(p, "GameFontHighlight", "comment", 190, -104, 240)
   local lock = editBox(p, 0, -100, 170, function(v)
     W.db.lockName = v ~= "" and v or nil
@@ -210,14 +210,14 @@ local function pageAdvertiser(parent)
   local preview = text(p, "GameFontHighlightSmall", "comment", 0, -140, 430)
 
   return { frame = p, refresh = function()
-    if not chan:HasFocus() then chan:SetText(W.db.adChannel or "") end
+    if not chan:HasFocus() then chan:SetText(W.db.adChannels or "") end
     if not lock:HasFocus() then lock:SetText(W.db.lockName or "") end
-    local _, joined = W.ads:channel()
-    chanOut:SetText(joined and W.hex("green", "joined: " .. joined)
-      or W.hex("orange", "not joined yet: type /join " .. (W.db.adChannel or "Services")))
-    lockOut:SetText("fills in by itself when you group with them")
+    chanOut:SetText(W.ads:channelSummary())
+    local age = W.db.remoteAt and (W.now() - W.db.remoteAt)
+    lockOut:SetText((age and age < 120) and W.hex("green", "synced: " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
+      or "syncs by itself when you group with them")
     preview:SetText("Your ad: " .. W.hex("fg", W.ads:text()) .. "\n\n"
-      .. W.hex("comment", "The Post ad button appears after setup. One click = one post."))
+      .. W.hex("comment", "The ad follows the main warlock's destination and price. The Post ad button appears after setup: one click posts once to each channel. With assist in the warlock's raid you invite and queue \"inv\" whispers yourself."))
   end }
 end
 

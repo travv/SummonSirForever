@@ -177,20 +177,22 @@ local chat = {
     end
 
     local msg = SteaSummonSave.adText
-    local chanId
+    local targets
     if addonData.ads then
+      -- one click = this ad once in each listed channel (Travis's call, 2026-11-11)
       msg = addonData.ads:text()
-      chanId = addonData.ads:channel()
-      if not chanId then
-        cprint("Not in the " .. tostring(SteaWarlockDB.adChannel) .. " channel. Join it, or set another with /sw channel <name>.")
+      targets = addonData.ads:targets()
+      if #targets == 0 then
+        cprint("Not in any ad channel (" .. tostring(SteaWarlockDB.adChannels) .. "). Join one, or set them with /sw channels 1, 2, 8")
         return
       end
     else
-      chanId = self:tradeChannel()
+      local chanId = self:tradeChannel()
       if not chanId then
         cprint(L["No Trade channel found. Trade ads only work in cities."])
         return
       end
+      targets = { chanId }
     end
     if msg == nil or msg == "" then
       return
@@ -198,7 +200,9 @@ local chat = {
 
     local trigphrase = SteaSummonSave.summonWords[1] or ""
     msg = tstring(msg, {["%%l"] = GetMinimapZoneText(), ["%%z"] = GetZoneText(), ["%%t"] = trigphrase})
-    SendChatMessage(msg, "CHANNEL", nil, chanId)
+    for _, chanId in ipairs(targets) do
+      SendChatMessage(msg, "CHANNEL", nil, chanId)
+    end
     SteaSummonSave.lastAdTime = time()
     addonData.summon:adButtonUpdate()
   end,

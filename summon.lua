@@ -883,7 +883,7 @@ local summon = {
         end)
         f.adbutton:SetScript("OnEnter", function(this)
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine("Advertise in " .. ((SteaWarlockDB and SteaWarlockDB.adChannel) or "Trade"))
+          GameTooltip:AddLine("Post the ad to: " .. ((SteaWarlockDB and SteaWarlockDB.adChannels) or "Trade"))
           GameTooltip:Show()
         end)
         f.adbutton:SetScript("OnLeave", function()
