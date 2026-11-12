@@ -107,9 +107,9 @@ W.DEFAULTS = {
   adChannel = "Services",  -- (pre-w9 single channel; adChannels replaces it)
   adChannels = "General, Trade, Services, LookingForGroup",  -- names resolve on every character (w16); LFG is the opt-in global channel (Travis, w18)
   adTemplate = "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
-  replyText = "Right away, sir! Summon to {dest} is {price}. Invite sent! Accept the summon within 2 min and pay by trade when you land!",
-  wrongDestText = "So sorry, sir! I'm summoning to {dest} right now, not {asked}!",
-  advertiserReplyText = "Right this way, sir! Whisper {lock} \"123\" for a summon to {dest} ({price})!",
+  replyText = "Summon to {dest} is {price}, sir. Invite sent: accept it and the summon within 2 min, pay by trade when you land.",
+  wrongDestText = "Sorry, sir, I'm summoning to {dest} right now, not {asked}.",
+  advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest}, sir ({price}).",
   summons = {},           -- { id, name, t, dest, price, arrived, paid, paidAmount, paidAt, nonPayer }
   payments = {},          -- { name, t, amount, summonId }
   blocklist = {},         -- name -> { untilT, at, reason }
@@ -123,9 +123,18 @@ W.STOCK = {
     "{dest} summons {price}! /w {lock} 123",
     "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",
   },
-  replyText = "Summon to {dest}: {price}. Invite sent, accept the summon within 2 min. Pay by trade on arrival.",
-  wrongDestText = "Sorry, I'm summoning to {dest} right now, not {asked}.",
-  advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest} ({price}).",
+  replyText = {
+    "Summon to {dest}: {price}. Invite sent, accept the summon within 2 min. Pay by trade on arrival.",
+    "Right away, sir! Summon to {dest} is {price}. Invite sent! Accept the summon within 2 min and pay by trade when you land!",
+  },
+  wrongDestText = {
+    "Sorry, I'm summoning to {dest} right now, not {asked}.",
+    "So sorry, sir! I'm summoning to {dest} right now, not {asked}!",
+  },
+  advertiserReplyText = {
+    "Whisper {lock} \"123\" for a summon to {dest} ({price}).",
+    "Right this way, sir! Whisper {lock} \"123\" for a summon to {dest} ({price})!",
+  },
 }
 
 function W.upgradeStock(db)

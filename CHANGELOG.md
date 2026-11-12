@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-w20 (2026-11-12): shorter messages
+
+- Every customer message is rewritten shorter: "sir" once, no exclamation points, no carriage (the warlock player found the old lines a bit much). The five variants per type are kept, the price / 2 minutes / pay-by-trade facts stay in every first reply, and plain mode is unchanged. The same goes for the group announce, the summon whisper, the click nag and the AFK reply.
+- Saved copies of the old stock wording upgrade once; anything you typed yourself is left alone.
+
 ## 1.0.0-w19 (2026-11-12): tab screenshots, round one
 
 - The ledger headline, the Ads title and the setup "step n of 3" line start to the right of the portrait circle instead of under it.

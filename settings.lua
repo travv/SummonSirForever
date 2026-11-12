@@ -31,10 +31,22 @@ summonWords[22] ="123 summons"
 summonWords[23] ="123 summon"
 summonWords[24] ="[SteaSummon] 123"
 
--- SummonSir house style: "sir" and exclamation points. %p player, %l subzone,
+-- SummonSir house style: brief, "sir" once, no exclamation points. %p player, %l subzone,
 -- %z zone, %t summon phrase. Saved texts still on the old stock wording get
 -- upgraded at login; anything you typed yourself is left alone.
 local FLAVOR = {
+  raidchat = "Summoning %p.",
+  whisperchat = "Summon's on the way, sir. Accept it when it pops.",
+  saychat = "Summoning %p. Click the portal, please.",
+  raidinfo = "Summons are open, sir. Type %t for a summon, -%t to cancel, or %t again if one fails.",
+  clickersnag = "Need more clickers at %l, %z. Come help, sir.",
+  clicknag = "Click the portal, please.",
+  altWhisper = "You're in the summon queue, sir. Whisper me an alt name if you'd rather not wait online.",
+  altGetOnlineWhisper = "You're near the top of the summon queue, sir. Get online now.",
+  afkText = "AFK for a moment, sir. Back shortly.",
+}
+-- the w5 wording (too much, per the warlock player): also upgraded if still saved
+local OLD_FLAVOR = {
   raidchat = "Now summoning Sir %p!",
   whisperchat = "Sit back and relax! The summon is on the way, sir :)",
   saychat = "Summoning Sir %p! Click the portal please!",
@@ -144,7 +156,7 @@ settings = {
       afkText = L["afktext"],
     }
     for k, v in pairs(FLAVOR) do
-      if SteaSummonSave[k] == nil or SteaSummonSave[k] == STOCK[k] then
+      if SteaSummonSave[k] == nil or SteaSummonSave[k] == STOCK[k] or SteaSummonSave[k] == OLD_FLAVOR[k] then
         SteaSummonSave[k] = v
       end
     end
