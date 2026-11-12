@@ -155,7 +155,10 @@ local function pageWarlock(parent)
     function() return W.db.service end, function(v) W.db.service = v end)
   local plain = checkBox(p, 0, -194, "Plain messages (skip the \"sir\" flavor)",
     function() return W.db.plainMode end, function(v) W.db.plainMode = v; U:refresh() end)
-  local sample = text(p, "GameFontHighlightSmall", "comment", 0, -224, 430)
+  local remind = checkBox(p, 0, -218, "Whisper a payment reminder when they arrive (off: they know to trade you)",
+    function() return W.messages:setting("complete").mode ~= "off" end,
+    function(v) W.messages:setting("complete").mode = v and "random" or "off"; W.fire("CONFIG_CHANGED") end)
+  local sample = text(p, "GameFontHighlightSmall", "comment", 0, -248, 430)
 
   return { frame = p, refresh = function()
     local cur = W.destinations.byKey(W.db.dest)
@@ -167,7 +170,7 @@ local function pageWarlock(parent)
       priceOut:SetText(W.hex("green", W.fmtMoney(W.db.price)) .. W.hex("comment", " per summon"))
     end
     keyOut:SetText(bindingStatus(NEXT_BINDING, BIND_PATH_NEXT))
-    svc.refresh(); plain.refresh()
+    svc.refresh(); plain.refresh(); remind.refresh()
     local saved = W.messages.last.queued
     local reply = W.messages:text("queued")
     sample:SetText(reply and ("First reply: " .. W.hex("fg", reply))

@@ -255,6 +255,12 @@ function O:build()
             get = function() return db().service end,
             set = function(_, v) db().service = v; changed() end,
           },
+          reminder = {
+            order = 1.5, type = "toggle", name = "Payment reminder on arrival", width = "full",
+            desc = "One whisper when a customer lands (\"Welcome to Desolace, sir. That's 1g, trade me when you're ready.\"). Off by default: customers expect to trade you on arrival anyway. The wording is under Messages.",
+            get = function() return W.messages:setting("complete").mode ~= "off" end,
+            set = function(_, v) W.messages:setting("complete").mode = v and "random" or "off"; changed() end,
+          },
           maxQueue = {
             order = 2, type = "range", name = "Queue cap (0 = none)", min = 0, max = 39, step = 1,
             desc = "New customers get the \"queue is full\" reply past this many waiting or invited. A raid holds 40.",

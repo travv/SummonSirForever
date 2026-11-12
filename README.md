@@ -32,7 +32,7 @@ Every tab is visible to every role, so a clicker can read the ledger and the adv
 2. When they join the group they appear on the **Queue** tab with their place in line. The first person waiting is marked **NEXT** in green.
 3. Press your **Summon Next** key, the Next button, or the big Summon Next button. The row turns to **Casting**, the group hears who is coming, and **every clicker window plays the raid-warning sound and shows a PORTAL UP banner** with a 30-second bar. The sound is the cue to look at that window.
 4. The clickers click the portal (or press Interact With Target if they set that up). The row reads **Portal up**, then **Arrived** when the customer takes it.
-5. The customer trades you. The payment lands in the ledger with a coin sound and one "paid:" line in chat. If they arrive and do not pay within 10 minutes they go on the never-paid list and are blocked for 24 hours (paying later lifts it).
+5. The customer trades you. Any amount counts (a discount is still a payment): it lands in the ledger with a coin sound and one "paid:" line in chat. If they arrive and do not pay within 10 minutes they go on the never-paid list and are blocked for 24 hours (paying later lifts it). An optional arrival reminder whisper is off by default.
 
 ## The tabs
 

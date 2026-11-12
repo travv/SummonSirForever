@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-w27 (2026-11-12): arrival reminder opt-in, discounts are payments
+
+- **The arrival reminder is off by default.** Customers expect to trade the warlock on arrival, so the whisper is a checkbox on the warlock setup page and under Options > Customers for anyone who wants it. The grace timer and never-paid block run either way.
+- **Any trade amount counts as paid.** Discounts keep the line moving, so a 50s trade on a 1g summon clears the tab like any other payment; the ledger records the real amount and no longer flags it as short.
+- w26 had these two behaviors but shipped without the checkbox, the docs or release notes. w27 completes it.
+
 ## 1.0.0-w25 (2026-11-12): shorter cast whisper
 
 - The whisper sent when you cast on someone is just "Summoning you now, sir."
