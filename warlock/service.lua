@@ -91,12 +91,29 @@ function V:isNearby(player)
   return util and util.playerClose and util:playerClose(player) and true or false
 end
 
+function V:blockedNotice(player, entry, now)
+  now = now or W.now()
+  self.blockedTold = self.blockedTold or {}
+  if self.blockedTold[player] and now - self.blockedTold[player] < self.REPLY_EVERY then return false end
+  self.blockedTold[player] = now
+  local left = ""
+  if entry and entry.untilT and W.stats and W.stats.duration then
+    left = ", " .. W.stats.duration(entry.untilT - now) .. " left"
+  end
+  W.print(W.hex("comment", "ignored " .. player .. " (blocked" .. (entry and entry.reason and (": " .. entry.reason) or "") .. left .. ")"))
+  return true
+end
+
 -- true = handled, upstream chat.lua stops
 function V:onChat(event, msg, player)
   if not player or player == W.me() or not msg then return false end
 
-  if W.blocklist:isBlocked(player) then
-    return true -- silent on every channel: no reply, no invite, no queue
+  local blocked, entry = W.blocklist:isBlocked(player)
+  if blocked then
+    -- no reply, no invite, no queue; one dim chat line per name every 10 min
+    -- so the operator knows why a whisper went unanswered
+    if event == "CHAT_MSG_WHISPER" then self:blockedNotice(player, entry) end
+    return true
   end
   if event ~= "CHAT_MSG_WHISPER" then return false end
 

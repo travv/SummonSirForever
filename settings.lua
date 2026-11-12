@@ -74,6 +74,15 @@ settings = {
       SteaSummonSave.listSizeV2 = true
     end
 
+    if not SteaSummonSave.showV2 then
+      -- w13: the warlock's window holds AFK, Ad, Ledger and Menu, so it stays
+      -- up even with nobody in line (was "only while summons are active")
+      if addonData.util:playerIsWarlock() then
+        SteaSummonSave.show = 1
+      end
+      SteaSummonSave.showV2 = true
+    end
+
     if SteaSummonSave.waiting == nil then
       db("wait list empty on load")
       SteaSummonSave.waiting = {}
@@ -158,10 +167,11 @@ settings = {
     SteaSummonSave = {}
     SteaSummonSave.summonWords = summonWords
     if addonData.util:playerIsWarlock() then
-      SteaSummonSave.show = 2
+      SteaSummonSave.show = 1 -- always: the window carries the service buttons
     else
       SteaSummonSave.show = 3
     end
+    SteaSummonSave.showV2 = true
     SteaSummonSave.updates = true
     SteaSummonSave.prioplayers = {[1]="Stea"}
     SteaSummonSave.shitlist = {}

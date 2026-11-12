@@ -211,7 +211,7 @@ function W.countShards()
 end
 
 function W.print(...)
-  print(W.hex("purple", "Warlock:"), ...)
+  print(W.hex("purple", "SummonSir:"), ...)
 end
 
 ---------------------------------

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-w13 (2026-11-12): the summon window explains itself
+
+A polish pass on the window everyone looks at, so a crew member who never read a doc can tell what each thing means.
+
+- **Plain words in the Status column:** Waiting, Casting, Portal up, Arrived, Declined, Offline, Dead (were the internal names: requested, pending, summoned, accepted).
+- **NEXT marker.** The small cell between the name and the status (upstream's raid-priority letter, which meant nothing for a service) now shows a green NEXT on the person the Next button, its key and the big button will summon. Hover it for the explanation.
+- **Empty queue says so:** "Nobody in line. People who whisper you for a summon show up here." (clickers see "The warlock's queue shows up here.")
+- **Header counts read at a glance:** "Clickers 2   Raid 7/40" on the right of the Location line. Clickers turn green when there are enough to click, the raid count turns orange at 35 and red at 39, since invites fail silently at 40. Ungrouped shows "not grouped".
+- **Tooltips on everything:** every header button (Menu, AFK with its on/off state, Ad with the channel list, Summon me), every queue name ("Click: summon them now. Right-click: move, remove, block or whisper.") and every X ("Remove from the queue. No charge, no block.").
+- **Summon me is hidden on the warlock running the service.** A misclick queued the warlock itself and posted "123" to the raid. It is still in the Menu.
+- **The window stays up for the warlock** even with nobody in line (it holds AFK, Ad, Ledger and Menu). Applied once; the window mode setting still works.
+- **Escape closes the window.** Reopen it from the Menu or the minimap button.
+- The resize grip no longer sits on the scrollbar's down arrow; the minimum width is 380 so nothing overlaps.
+- Chat lines from the addon start with "SummonSir:" (was "Warlock:"), and a whisper from a blocked player prints one dim "ignored Name (blocked: never paid, 3h left)" line per name every 10 minutes instead of vanishing silently.
+
 ## 1.0.0-w12 (2026-11-11): layout fixes from the first w11 screenshots, stuck offline customers
 
 - **Header text no longer sits under the portrait circle.** Location and Destination start to the right of it. The ledger and setup windows drop the portrait altogether (it covered their first line).

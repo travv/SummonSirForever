@@ -23,6 +23,8 @@ local function goldLabel(text)
   return (string.gsub(text, "^([^:]+:)", "|cffffd200%1|r", 1))
 end
 local DESTINATION_UNSET = "|cffffd200Destination:|r |cff808080not set. Click to summon to where you stand.|r"
+local NEXT_MARK = "|cff1aff1aNEXT|r"
+local MAX_RAID = 40
 
 -- API compat: create a frame, falling back to another (or no) template when the
 -- client no longer ships the classic-era one
@@ -164,23 +166,40 @@ local summon = {
   setClicks = function(self, locks, clicks)
     self.localLocks = tonumber(locks)
     self.localClickers = tonumber(clicks)
-    if SteaSummonFrame then
+    self:headerCounts()
+  end,
 
-      if not SteaSummonFrame.status then
-        self:reConfigureFrames()
-      end
-
-      if IsInGroup(LE_PARTY_CATEGORY_HOME) and self.location ~= "" and self.zone ~= nil then
-        if self.localLocks and self.localLocks + self.localClickers > 2 then
-          SteaSummonFrame.status:SetTextColor(0.1, 1, 0.1) -- enough people to summon
-        else
-          SteaSummonFrame.status:SetTextColor(1, 1, 1)
-        end
-        SteaSummonFrame.status:SetText(L["Warlocks"] .. " " .. locks .. "   " .. L["Clickers"] .. " "..  clicks)
-      else
-        SteaSummonFrame.status:SetText("")
-      end
+  ---------------------------------
+  -- header line 1, right side: "Clickers 2   Raid 7/40". Clickers turn
+  -- green once there are enough people at the destination to click the
+  -- portal; the raid count turns orange near full and red when full, since
+  -- invites fail silently past 40
+  headerCounts = function(self)
+    if not SteaSummonFrame then
+      return
     end
+    if not SteaSummonFrame.status then
+      self:reConfigureFrames()
+    end
+    if not IsInGroup(LE_PARTY_CATEGORY_HOME) then
+      SteaSummonFrame.status:SetText("|cff808080not grouped|r")
+      return
+    end
+    local parts = {}
+    if self.location ~= "" and self.zone ~= nil and self.localLocks then
+      local enough = self.localLocks + self.localClickers > 2
+      local color = enough and "|cff1aff1a" or "|cffffffff"
+      table.insert(parts, color .. L["Clickers"] .. " " .. tostring(self.localClickers) .. "|r")
+    end
+    local n = GetNumGroupMembers() or 0
+    local color = "|cffffffff"
+    if n >= MAX_RAID - 1 then
+      color = "|cffff2020"
+    elseif n >= MAX_RAID - 5 then
+      color = "|cffff8040"
+    end
+    table.insert(parts, color .. "Raid " .. n .. "/" .. MAX_RAID .. "|r")
+    SteaSummonFrame.status:SetText(table.concat(parts, "   "))
   end,
 
   ---------------------------------
@@ -635,7 +654,7 @@ local summon = {
       --   line 1: Location ............ Warlocks n  Clickers n
       --   line 2: Destination (click)... [shard] n
       --   row 3:  [Next] [Summon me] ............ [AFK] [Ad] [Ledger] [Menu]
-      local MIN_W, MIN_H = 360, 180
+      local MIN_W, MIN_H = 380, 180
       local HEADER_H = 106
 
       local f = CreateFrame("Frame", "SteaSummonFrame", UIParent, "ButtonFrameTemplate")
@@ -667,6 +686,24 @@ local summon = {
         f.Inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -HEADER_H)
         f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
       end
+
+      --- what an empty queue says (showSummons fills in the role-specific line)
+      local emptyParent = child(f, "Inset") or f
+      f.emptyText = emptyParent:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+      f.emptyText:SetPoint("LEFT", emptyParent, "LEFT", 24, 6)
+      f.emptyText:SetPoint("RIGHT", emptyParent, "RIGHT", -24, 6)
+      f.emptyText:SetJustifyH("CENTER")
+      f.emptyText:SetWordWrap(true)
+      f.emptyText:SetText("")
+
+      --- Escape closes the window like any other panel; closing it by hand
+      --- (Escape or the X) sticks until the Menu or minimap button reopens it
+      table.insert(UISpecialFrames, "SteaSummonFrame")
+      f:HookScript("OnHide", function()
+        if not addonData.summon.hidingSelf then
+          addonData.summon.show = false
+        end
+      end)
 
       --- saved position and size, never smaller than the layout needs
       local wpos = addonData.settings:getWindowPos()
@@ -716,7 +753,7 @@ local summon = {
       local listParent = child(f, "Inset") or f
       local sf = CreateFrame("ScrollFrame", "SteaSummonScrollFrame", listParent, "UIPanelScrollFrameTemplate")
       sf:SetPoint("TOPLEFT", listParent, "TOPLEFT", 4, -4)
-      sf:SetPoint("BOTTOMRIGHT", listParent, "BOTTOMRIGHT", -27, 4)
+      sf:SetPoint("BOTTOMRIGHT", listParent, "BOTTOMRIGHT", -27, 22) -- clear of the resize grip
 
       addonData.buttonFrame = CreateFrame("Frame", "SteaSummonButtonFrame", sf)
       addonData.buttonFrame:SetSize(330, 37 * 25 + 10)
@@ -775,6 +812,11 @@ local summon = {
       f.meButton:SetScript("OnEnter", function(this)
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
         GameTooltip:AddLine(L["Request/Reset Summon"])
+        if self:findWaitingPlayer(self.me) then
+          GameTooltip:AddLine("You are in line. Click to go back to \"waiting\" if your summon failed.", 1, 1, 1, true)
+        else
+          GameTooltip:AddLine("Put yourself in the warlock's queue for a summon.", 1, 1, 1, true)
+        end
         GameTooltip:Show()
       end)
       f.meButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -852,6 +894,13 @@ local summon = {
       f.context:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -72)
       f.context:SetText("Menu")
       f.context:SetScript("OnClick", function() addonData.appbutton:menu() end)
+      f.context:SetScript("OnEnter", function(this)
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Menu")
+        GameTooltip:AddLine("Show or hide this window, request a summon, raid tools, options and key bindings. The minimap button opens the same menu.", 1, 1, 1, true)
+        GameTooltip:Show()
+      end)
+      f.context:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
       if addonData.util:playerCanSummon() then
         f.adbutton = CreateFrame("Button", "SteaSummonAdButton", f, "UIPanelButtonTemplate")
@@ -863,8 +912,13 @@ local summon = {
         end)
         f.adbutton:SetScript("OnEnter", function(this)
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine("Post the ad to: " .. ((SteaWarlockDB and SteaWarlockDB.adChannels) or "Trade"))
-          GameTooltip:AddLine("One click posts once to each channel. The button counts down the cooldown.", 1, 1, 1, true)
+          GameTooltip:AddLine("Post the ad")
+          local where = (SteaWarlockDB and SteaWarlockDB.adChannels) or "Trade"
+          if addonData.ads and addonData.ads.channelSummary then
+            where = addonData.ads:channelSummary()
+          end
+          GameTooltip:AddLine("Channels: " .. where, 1, 1, 1, true)
+          GameTooltip:AddLine("One click posts the ad once to each channel, then the button counts down until you can post again.", 1, 1, 1, true)
           GameTooltip:Show()
         end)
         f.adbutton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -879,7 +933,9 @@ local summon = {
         end)
         f.afkbutton:SetScript("OnEnter", function(this)
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine(L["Toggle AFK: pauses auto invites and replies to asks"])
+          GameTooltip:AddLine(addonData.summon.afk and "AFK is on" or "AFK")
+          GameTooltip:AddLine(L["Toggle AFK: pauses auto invites and replies to asks"], 1, 1, 1, true)
+          GameTooltip:AddLine(addonData.summon.afk and "Click to go back to work." or "Click when you step away.", 1, 1, 1, true)
           GameTooltip:Show()
         end)
         f.afkbutton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -913,7 +969,8 @@ local summon = {
         self:enableButton(i, true, player)
         addonData.buttons[i].Button:SetText(strsplit("-", player))
 
-        addonData.buttons[i].Priority["FS"]:SetText(self.buffLetter[self:recPrio(rec)])
+        -- the cell upstream used for raid priority letters marks who is next
+        addonData.buttons[i].Priority["FS"]:SetText(rec == nextRec and NEXT_MARK or "")
 
         -- alts tooltip
         if #self:recAlts(rec) > 0 then
@@ -1079,10 +1136,29 @@ local summon = {
       end -- skip visual updates
     end -- rows
 
-    --- Summon me button: anyone grouped who is not at the destination
+    --- empty queue: say so, and what fills it
+    if SteaSummonFrame.emptyText then
+      if self.numwaiting == 0 then
+        local role = addonData.W and addonData.W.role and addonData.W.role() or "clicker"
+        if role == "warlock" then
+          SteaSummonFrame.emptyText:SetText("Nobody in line.\nPeople who whisper you for a summon show up here.")
+        else
+          SteaSummonFrame.emptyText:SetText("Nobody in line.\nThe warlock's queue shows up here.")
+        end
+        SteaSummonFrame.emptyText:Show()
+      else
+        SteaSummonFrame.emptyText:Hide()
+      end
+    end
+    self:headerCounts()
+
+    --- Summon me button: anyone grouped who is not at the destination,
+    --- except the warlock running the service (a misclick would queue
+    --- the warlock itself and post "123" to the raid). Still in the Menu.
     if SteaSummonFrame.meButton then
       local me = SteaSummonFrame.meButton
-      if IsInGroup(LE_PARTY_CATEGORY_HOME) and not self:isAtDestination() then
+      local serviceLock = addonData.W and addonData.W.role and addonData.W.role() == "warlock"
+      if IsInGroup(LE_PARTY_CATEGORY_HOME) and not self:isAtDestination() and not serviceLock then
         if self:findWaitingPlayer(self.me) then
           me:SetText(L["Reset Summon"])
         else
@@ -1126,7 +1202,9 @@ local summon = {
         addonData.monitor:start() -- start ui update tick
       end
     else
+      self.hidingSelf = true -- our own hide, not the user's Escape
       SteaSummonFrame:Hide()
+      self.hidingSelf = false
       if not self.isCasting then
         addonData.monitor:stop() -- stop ui update tick
       end
@@ -1374,6 +1452,30 @@ local summon = {
       addonData.buttons[i].Cancel:SetHeight(bh)
       addonData.buttons[i].Cancel:SetText("X")
       addonData.buttons[i].Cancel:SetPoint("TOPLEFT","SteaSummonButtonFrame","TOPLEFT", 8,-(((i-1)*bh)+hpad))
+      addonData.buttons[i].Cancel:SetScript("OnEnter", function(this)
+        local rec = addonData.summon:rowRecord(i)
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Remove " .. (rec and addonData.summon:recPlayer(rec) or "this person") .. " from the queue")
+        GameTooltip:AddLine("No charge, no block. Right-click the name for more.", 1, 1, 1, true)
+        GameTooltip:Show()
+      end)
+      addonData.buttons[i].Cancel:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+      --- the name is the cast button: say so on hover
+      addonData.buttons[i].Button:SetScript("OnEnter", function(this)
+        local rec = addonData.summon:rowRecord(i)
+        if not rec then
+          return
+        end
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(addonData.summon:recPlayer(rec))
+        if addonData.util:playerCanSummon() then
+          GameTooltip:AddLine("Click: summon them now, ahead of the line.", 1, 1, 1, true)
+        end
+        GameTooltip:AddLine("Right-click: move, remove, block or whisper.", 1, 1, 1, true)
+        GameTooltip:Show()
+      end)
+      addonData.buttons[i].Button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
       --- Wait Time
       addonData.buttons[i].Time = CreateFrame("Frame", "SteaSummonWaitTime"..i, addonData.buttonFrame, BackdropTemplateMixin and "BackdropTemplate")
@@ -1397,9 +1499,10 @@ local summon = {
       addonData.buttons[i].Time["FS"]:SetFontObject("GameFontNormalSmall")
       addonData.buttons[i].Time["FS"]:SetText(string.format(SecondsToTime(0)))
 
-      --- Priority
+      --- Next marker (upstream's raid-priority letter cell, repurposed)
+      local nextW = 38
       addonData.buttons[i].Priority = CreateFrame("Frame", "SteaSummonPriority"..i, addonData.buttonFrame, BackdropTemplateMixin and "BackdropTemplate")
-      addonData.buttons[i].Priority:SetWidth(bh)
+      addonData.buttons[i].Priority:SetWidth(nextW)
       addonData.buttons[i].Priority:SetHeight(bh)
       addonData.buttons[i].Priority:SetPoint("TOPLEFT", addonData.buttonFrame, "TOPLEFT",bw + wpad + 1,-(((i-1)*bh)+hpad))
       addonData.buttons[i].Priority:SetBackdrop( {
@@ -1408,9 +1511,12 @@ local summon = {
         tile = true, tileSize = 5, edgeSize = 15, insets = { left = 1, right = 1, top = 1, bottom = 1 }
       });
       addonData.buttons[i].Priority:SetScript("OnEnter", function(this)
+        if this.FS:GetText() == "" then
+          return
+        end
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(L["Reason for list placement"])
-        GameTooltip:AddLine(L["[W]arlock, [B]uffs, [P]riority, [N]ormal, [L]ast"])
+        GameTooltip:AddLine("Next in line")
+        GameTooltip:AddLine("The Next button, its key and the big Summon Next button all summon this person.", 1, 1, 1, true)
         GameTooltip:Show()
       end)
       addonData.buttons[i].Priority:SetScript("OnLeave", function()
@@ -1422,19 +1528,20 @@ local summon = {
           "SteaSummonStatusText"..i,"ARTWORK", "ChatFontNormal")
       addonData.buttons[i].Priority["FS"]:SetParent(addonData.buttons[i].Priority)
       addonData.buttons[i].Priority["FS"]:SetPoint("TOP",addonData.buttons[i].Priority,"TOP",0,0)
-      addonData.buttons[i].Priority["FS"]:SetWidth(bh)
+      addonData.buttons[i].Priority["FS"]:SetWidth(nextW)
       addonData.buttons[i].Priority["FS"]:SetHeight(bh)
       addonData.buttons[i].Priority["FS"]:SetJustifyH("CENTER")
       addonData.buttons[i].Priority["FS"]:SetJustifyV("MIDDLE")
       addonData.buttons[i].Priority["FS"]:SetFontObject("GameFontNormalSmall")
       addonData.buttons[i].Priority["FS"]:SetTextColor(1,1,1)
-      addonData.buttons[i].Priority["FS"]:SetText("N")
+      addonData.buttons[i].Priority["FS"]:SetText("")
 
-      --- Status
+      --- Status (plain words from the locale: Waiting, Casting, Portal up, ...)
+      local statusW = 66
       addonData.buttons[i].Status = CreateFrame("Frame", "SteaSummonStatus"..i, addonData.buttonFrame, BackdropTemplateMixin and "BackdropTemplate")
-      addonData.buttons[i].Status:SetWidth(bw)
+      addonData.buttons[i].Status:SetWidth(statusW)
       addonData.buttons[i].Status:SetHeight(bh)
-      addonData.buttons[i].Status:SetPoint("TOPLEFT", addonData.buttonFrame, "TOPLEFT",bw + wpad + 27,-(((i-1)*bh)+hpad))
+      addonData.buttons[i].Status:SetPoint("TOPLEFT", addonData.buttonFrame, "TOPLEFT",bw + wpad + nextW + 2,-(((i-1)*bh)+hpad))
       addonData.buttons[i].Status:SetBackdrop( {
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -1444,7 +1551,7 @@ local summon = {
           "SteaSummonStatusText"..i,"ARTWORK", "ChatFontNormal")
       addonData.buttons[i].Status["FS"]:SetParent(addonData.buttons[i].Status)
       addonData.buttons[i].Status["FS"]:SetPoint("TOP",addonData.buttons[i].Status,"TOP",0,0)
-      addonData.buttons[i].Status["FS"]:SetWidth(bw)
+      addonData.buttons[i].Status["FS"]:SetWidth(statusW)
       addonData.buttons[i].Status["FS"]:SetHeight(bh)
       addonData.buttons[i].Status["FS"]:SetJustifyH("CENTER")
       addonData.buttons[i].Status["FS"]:SetJustifyV("MIDDLE")
@@ -1788,7 +1895,9 @@ local summon = {
     if event == "PLAYER_REGEN_DISABLED" then
       -- entered combat, stop everything or bad things happen
       if SteaSummonFrame then
+        addonData.summon.hidingSelf = true -- not the user's Escape: comes back after combat
         SteaSummonFrame:Hide()
+        addonData.summon.hidingSelf = false
       end
     end
     if event == "PLAYER_REGEN_ENABLED" then
