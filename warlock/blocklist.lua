@@ -76,7 +76,7 @@ function B:init()
   end
 
   W.command("block", "block <name> [30m|24h|7d|perm]", function(args)
-    if args == "" then W.print("usage: /sw block <name> [24h]") return end
+    if args == "" then W.print("usage: /ssf block <name> [24h]") return end
     local name, secs = nameAndDuration(args)
     B:add(name, secs, "manual")
     W.print("blocked", name, "for", left(secs))

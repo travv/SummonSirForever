@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-w17 (2026-11-12): one window with tabs, /ssf
+
+- **One window, four tabs along the bottom: Queue, Ledger, Ads, Setup.** Every character sees every tab, so a clicker can read the ledger and the advertiser can watch the queue. The tabs are the game's own (the character-frame style). Hover a tab for what it holds; a second press on the current tab closes the window.
+  - Queue is the summon window as before (header, buttons, list). The Ledger button left the header; the ledger is a tab.
+  - Ledger is the former ledger panel: session headline, scrolling history, open tabs with Paid / Block, Options.
+  - Ads is the former ad window: where it posts, sync state, the ad as it will read in its own box, Post ad. An advertiser logs in on this tab.
+  - Setup is the walkthrough, inside the window. First run opens the window on this tab; leaving the tab counts as done; it is safe to rerun any time.
+- The window is 480 x 400 by default and never smaller than 460 x 340, so every tab fits. Switching tabs is blocked during combat (the queue's cast buttons are locked then).
+- **The slash command is /ssf** (SummonSirForever). /sw still works as an alias. Every message, tooltip and doc now says /ssf. New: /ssf tab <queue|ledger|ads|setup>.
+
 ## 1.0.0-w16 (2026-11-12): fixes from the first w15 screenshots
 
 - **Ad channels default to names: General, Trade, Services.** Channel numbers belong to one character: on the advertiser, /8 turned out to be LookingForGroup, so the "1, 2, 8" default would have posted the ad there. Names resolve on every character. A saved "1, 2, 8" is migrated once; any other custom list is kept. The ad window and the settings page already show the resolved channel names, so you can see where an ad will land before posting.

@@ -341,7 +341,7 @@ function V:init()
     local amt, destText = string.match(args, "^(%S+)%s*(.-)$")
     local copper = W.parseMoneyUser(amt)
     if not copper then
-      W.print("price:", W.fmtMoney(W.priceFor(W.db.dest)), "(usage: /sw price 1g [tb])")
+      W.print("price:", W.fmtMoney(W.priceFor(W.db.dest)), "(usage: /ssf price 1g [tb])")
       return
     end
     if destText and destText ~= "" then

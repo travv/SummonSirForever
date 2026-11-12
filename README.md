@@ -4,7 +4,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 ## Summon service features
 
-SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
+SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/ssf` in game. All the original features below still work.
 
 > Not tested in game yet (v1.0.0-w9). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
@@ -20,10 +20,10 @@ A one-time **setup panel** opens on each character's first login. It asks you to
 - **Clicker:** one click turns on soft interact, then it checks your Interact key binding and shows a test banner.
 - **Advertiser:** ad channel and warlock name, with a preview of the ad.
 
-Run it again any time with `/sw setup`.
+Run it again any time with `/ssf setup`.
 
 ### Roles
-Each window gets one role. Set it with `/sw role <role>`.
+Each window gets one role. Set it with `/ssf role <role>`.
 
 | Role | Who | What it does |
 |---|---|---|
@@ -38,16 +38,16 @@ Each window gets one role. Set it with `/sw role <role>`.
 - Each payment links to that customer's latest summon from the last 30 minutes.
 
 **Stats panel**
-- Open it with `/sw` or the `$` button on the summon window.
+- Open it with `/ssf` or the `$` button on the summon window.
 - It shows this session's summons, gold, gold per hour and % paid.
 - It also shows the last 7 days and weeks starting Monday.
-- `/sw today` prints today hour by hour in chat.
+- `/ssf today` prints today hour by hour in chat.
 
 **Never-paid list and timed blocklist**
 - A customer who arrived and still hasn't paid after 10 minutes goes on the Never paid list, which has **Paid** and **Block** buttons.
 - They are also blocked for 24h automatically. If they pay later, the block lifts.
 - Blocked players get no reply, no invite and no queue spot.
-- Manual control: `/sw block <name> 7d`, `/sw unblock <name>`, `/sw blocklist`.
+- Manual control: `/ssf block <name> 7d`, `/ssf unblock <name>`, `/ssf blocklist`.
 
 **Destinations and typo-tolerant requests**
 - About 50 presets: capitals, dungeons, raids and towns.
@@ -80,7 +80,7 @@ Each window gets one role. Set it with `/sw role <role>`.
 - A big button showing who's next, how many are queued and your shard count. Clicking it does exactly what your Summon Next keybind does.
 - It switches to "Life Tap" when you're low on mana and turns red when you're out of shards.
 - Drag its top strip to move it. Its **Clear** button empties the queue (it asks first).
-- Size, show or hide, and reset position are in settings, or use `/sw big on|off|reset`.
+- Size, show or hide, and reset position are in settings, or use `/ssf big on|off|reset`.
 
 **Stable queue rows**
 - Rows don't shift while your mouse is over the list, so you don't click the wrong person.
@@ -102,43 +102,43 @@ Each window gets one role. Set it with `/sw role <role>`.
 - Summon phrases ignore case and punctuation ("123!", "Summon Plz").
 
 ### Settings page
-Every setting below is also on a **Summon service** page in **Settings > AddOns > SummonSirForever**. Open it with `/sw options` or the **Options** button on the ledger panel. The slash commands are there for when you'd rather type.
+Every setting below is also on a **Summon service** page in **Settings > AddOns > SummonSirForever**. Open it with `/ssf options` or the **Options** button on the ledger panel. The slash commands are there for when you'd rather type.
 
 ### Quick setup
 **Warlock (2 min)**
-1. `/sw dest tb` sets where you summon to (`/sw dest list` shows all presets).
-2. `/sw price 1g` sets the default. `/sw price 80s org` sets a price for one destination.
+1. `/ssf dest tb` sets where you summon to (`/ssf dest list` shows all presets).
+2. `/ssf price 1g` sets the default. `/ssf price 80s org` sets a price for one destination.
 
 **Clickers (1 min each)**
 1. Run `/console SoftTargetInteract 3`.
 2. Bind **Interact With Target** in Key Bindings > Targeting.
-3. Run `/sw testportal` to check the banner shows your key.
+3. Run `/ssf testportal` to check the banner shows your key.
 
 **Advertiser (1 min)**
-1. Join your ad channels (the default list is 1, 2, 8; see `/sw channels`).
-2. Group with the main warlock. You get assist, and the ad follows the warlock's destination and price. Not grouped? Run `/sw lock <warlock name>`.
+1. Join your ad channels (the default list is 1, 2, 8; see `/ssf channels`).
+2. Group with the main warlock. You get assist, and the ad follows the warlock's destination and price. Not grouped? Run `/ssf lock <warlock name>`.
 3. Click **Post ad** once per round: it posts once to each channel.
 
 ### Commands
 | Command | Does |
 |---|---|
-| `/sw` | Ledger panel |
-| `/sw options` | Summon service settings page |
-| `/sw role warlock\|clicker\|advertiser` | Set this window's role |
-| `/sw dest <name>` / `dest list` / `dest clear` | Destination for ads and replies |
-| `/sw price <amount> [dest]` | Price, e.g. `80s`, `1g`, `1g50s` |
-| `/sw block <name> [30m\|24h\|7d\|perm]` / `unblock` / `blocklist` | Blocklist |
-| `/sw paid <name> [amount]` | Mark a summon paid by hand |
-| `/sw today` | Today's summons and gold by hour |
-| `/sw service on\|off` | Turn the warlock's auto-reply and invites on or off |
-| `/sw cap <n>` | Queue cap for new customers (0 = none) |
-| `/sw plain on\|off` | Plain messages instead of the SummonSir lines |
-| `/sw say <type>` | Print a sample message of one type |
-| `/sw setup` | Run the first-time setup again |
-| `/sw big on\|off\|reset` | Big Summon Next button |
-| `/sw clear` | Clear the whole queue (asks first) |
-| `/sw adtext <template>` / `channels <1, 2, 8>` / `lock <name>` | Ad text, ad channels, main warlock's name |
-| `/sw testportal` | Preview the clicker banner |
+| `/ssf` | Ledger panel |
+| `/ssf options` | Summon service settings page |
+| `/ssf role warlock\|clicker\|advertiser` | Set this window's role |
+| `/ssf dest <name>` / `dest list` / `dest clear` | Destination for ads and replies |
+| `/ssf price <amount> [dest]` | Price, e.g. `80s`, `1g`, `1g50s` |
+| `/ssf block <name> [30m\|24h\|7d\|perm]` / `unblock` / `blocklist` | Blocklist |
+| `/ssf paid <name> [amount]` | Mark a summon paid by hand |
+| `/ssf today` | Today's summons and gold by hour |
+| `/ssf service on\|off` | Turn the warlock's auto-reply and invites on or off |
+| `/ssf cap <n>` | Queue cap for new customers (0 = none) |
+| `/ssf plain on\|off` | Plain messages instead of the SummonSir lines |
+| `/ssf say <type>` | Print a sample message of one type |
+| `/ssf setup` | Run the first-time setup again |
+| `/ssf big on\|off\|reset` | Big Summon Next button |
+| `/ssf clear` | Clear the whole queue (asks first) |
+| `/ssf adtext <template>` / `channels <1, 2, 8>` / `lock <name>` | Ad text, ad channels, main warlock's name |
+| `/ssf testportal` | Preview the clicker banner |
 
 ### Ground rules
 - Nothing here presses keys, clicks, or keeps you online.

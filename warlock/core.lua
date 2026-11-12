@@ -1,4 +1,4 @@
--- Warlock service core: account-wide saved data, money helpers, events, /sw
+-- Warlock service core: account-wide saved data, money helpers, events, /ssf
 -- Copyright (c) 2026 travv. MIT licensed, same as the rest of this addon.
 
 local addonName, addonData = ...
@@ -6,7 +6,7 @@ local addonName, addonData = ...
 local W = {
   modules = {},   -- init order
   handlers = {},  -- event -> list of functions
-  commands = {},  -- /sw subcommand -> function(args)
+  commands = {},  -- /ssf subcommand -> function(args)
   helpLines = {},
 }
 addonData.W = W
@@ -87,7 +87,7 @@ end
 
 W.DEFAULTS = {
   schema = 1,
-  price = 10000,          -- copper per summon (1g); /sw price
+  price = 10000,          -- copper per summon (1g); /ssf price
   prices = {},            -- destination key -> copper override
   dest = nil,             -- destination key used in ads and replies
   lockName = nil,         -- warlock name, for advertiser ads (synced when grouped)
@@ -391,11 +391,11 @@ end
 
 function W.command(name, help, fn)
   W.commands[name] = fn
-  if help then table.insert(W.helpLines, "/sw " .. help) end
+  if help then table.insert(W.helpLines, "/ssf " .. help) end
 end
 
 function W.help()
-  W.print("commands (bare /sw opens the ledger):")
+  W.print("commands (bare /ssf opens the ledger):")
   for _, line in ipairs(W.helpLines) do print("  " .. line) end
 end
 W.command("help", "help: this list", W.help)
@@ -424,7 +424,8 @@ local function onLoaded(name)
       if not ok then W.print("init failed:", err) end
     end
   end
-  SLASH_STEAWARLOCK1 = "/sw"
+  SLASH_STEAWARLOCK1 = "/ssf" -- SummonSirForever (Travis, 2026-11-12)
+  SLASH_STEAWARLOCK2 = "/sw"  -- old name, kept so muscle memory still works
   SlashCmdList["STEAWARLOCK"] = W.slash
   W.loaded = true
   W.fire("WARLOCK_READY")

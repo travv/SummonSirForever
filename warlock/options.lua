@@ -1,4 +1,4 @@
--- "Summon service" page in Settings > AddOns > SummonSirForever: every /sw
+-- "Summon service" page in Settings > AddOns > SummonSirForever: every /ssf
 -- setting as a GUI. Registered from optionsgui:init so it nests under the
 -- addon's own category. Getters read the saved data lazily.
 -- Copyright (c) 2026 travv. MIT licensed.
@@ -112,11 +112,11 @@ function O:build()
     args = {
       intro = {
         order = 0, type = "description", fontSize = "medium",
-        name = "Settings for running a summon service. The same settings are also slash commands: type /sw help in chat for the list (bare /sw opens the ledger).",
+        name = "Settings for running a summon service. The same settings are also slash commands: type /ssf help in chat for the list (bare /ssf opens the ledger).",
       },
       rerunSetup = {
         order = 1, type = "execute", name = "Run setup again",
-        desc = "The one-time setup walkthrough (/sw setup).",
+        desc = "The one-time setup walkthrough (/ssf setup).",
         func = function() W.setup:open() end,
       },
 
@@ -410,7 +410,7 @@ function O:build()
               local key = GetBindingKey("INTERACTTARGET")
               if key then return "Interact With Target is bound to " .. W.hex("yellow", key) .. "." end
               return W.hex("red", "Interact With Target is not bound.")
-                .. " Bind it under Key Bindings > Targeting > Interact With Target, and turn on soft interact (the clicker page of /sw setup does both checks)."
+                .. " Bind it under Key Bindings > Targeting > Interact With Target, and turn on soft interact (the clicker page of /ssf setup does both checks)."
             end,
           },
         },
@@ -456,7 +456,7 @@ function O:register(parentName)
     local _, id = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("SummonSirService", "Summon service", parentName)
     O.categoryID = id
   end)
-  if not ok then W.print("Settings page not added (use /sw options for the window):", err) end
+  if not ok then W.print("Settings page not added (use /ssf options for the window):", err) end
 end
 
 -- standalone AceConfig window: works even if the Settings panel can't be opened

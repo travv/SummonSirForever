@@ -1,12 +1,12 @@
 -- One-time setup for new users: pick a role, set up that role, done.
--- Shows once per character on first login; /sw setup brings it back.
+-- Shows once per character on first login; /ssf setup brings it back.
 -- Each page teaches one thing and shows whether it worked (green / orange).
 -- Copyright (c) 2026 travv. MIT licensed.
 
 local _, addonData = ...
 local W = addonData.W
 
-local U = { frame = nil, page = 1, pages = {}, role = nil, opened = false }
+local U = { pageFrame = nil, page = 1, pages = {}, role = nil, opened = false }
 
 local ROLE_INFO = {
   warlock = { label = "Warlock", desc = "You cast the summons. People who whisper you get a reply, an invite and a place in line; every payment is tracked in the ledger." },
@@ -119,7 +119,7 @@ local function pageRole(parent)
       if role == U.role then b:LockHighlight() else b:UnlockHighlight() end
     end
     desc:SetText(W.hex("comment", "This window is set up as: ") .. W.hex("purple", ROLE_INFO[U.role].label) .. "\n"
-      .. ROLE_INFO[U.role].desc .. "\n\n" .. W.hex("comment", "Click a role to continue. You can change it later with /sw role."))
+      .. ROLE_INFO[U.role].desc .. "\n\n" .. W.hex("comment", "Click a role to continue. You can change it later with /ssf role."))
   end }
 end
 
@@ -307,14 +307,14 @@ local function pageDone(parent)
       table.insert(lines, "Summon the next person with " .. (key and (W.hex("yellow", key) .. ", ") or "your Summon Next key, ")
         .. "the Next button on the summon window, or the big Summon Next button.")
       table.insert(lines, "Right-click a name in the queue to move, remove, block or whisper them.")
-      table.insert(lines, W.hex("cyan", "/sw") .. " opens the ledger.")
+      table.insert(lines, W.hex("cyan", "/ssf") .. " opens the ledger.")
     elseif U.role == "clicker" then
       table.insert(lines, "When the banner says PORTAL UP, press your Interact key.")
     else
       table.insert(lines, "Click Post ad for each ad round. The button counts down until the next one.")
     end
-    table.insert(lines, W.hex("cyan", "/sw options") .. " has every setting, " .. W.hex("cyan", "/sw help") .. " lists the commands, "
-      .. W.hex("cyan", "/sw setup") .. " runs this again.")
+    table.insert(lines, W.hex("cyan", "/ssf options") .. " has every setting, " .. W.hex("cyan", "/ssf help") .. " lists the commands, "
+      .. W.hex("cyan", "/ssf setup") .. " runs this again.")
     b:SetText(table.concat(lines, "\n"))
   end }
 end
@@ -327,24 +327,22 @@ function U:currentPages()
   return { self.pages.role, rolePage, self.pages.done }
 end
 
-function U:build()
-  if self.frame then return self.frame end
-  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 400, "SummonSir setup") -- no portrait: it covered the step text
-  f:SetPoint("CENTER")
-  f:SetFrameStrata("DIALOG")
-  table.insert(UISpecialFrames, "SummonSirSetup")
-  if W.child(f, "Inset") then
-    -- the inset frames the page; buttons sit below it
-    f.Inset:ClearAllPoints()
-    f.Inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -48)
-    f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 44)
-  end
+-- the Setup tab: a page inside the summon window (warlock/tabs.lua)
+function U:buildInto(parent)
+  if self.pageFrame then return self.pageFrame end
+  local f = CreateFrame("Frame", "SummonSirSetupPage", parent)
+  f:SetAllPoints(parent)
+  f:Hide()
+  -- the inset frames the current step; Back / Next sit below it
+  f.inset = CreateFrame("Frame", nil, f, "InsetFrameTemplate")
+  f.inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -48)
+  f.inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 44)
 
   f.steps = text(f, "GameFontNormalSmall", "comment", 14, -30)
 
   local content = CreateFrame("Frame", nil, f)
-  content:SetPoint("TOPLEFT", 28, -64)
-  content:SetPoint("BOTTOMRIGHT", -28, 60)
+  content:SetPoint("TOPLEFT", 24, -62)
+  content:SetPoint("BOTTOMRIGHT", -24, 56)
   self.pages.role = pageRole(content)
   self.pages.warlock = pageWarlock(content)
   self.pages.clicker = pageClicker(content)
@@ -360,22 +358,24 @@ function U:build()
   f.skip = button(f, "Skip setup", 100, function() U:finish() end)
   f.skip:SetPoint("BOTTOM", 0, 12)
 
-  f:Hide()
-  -- closing early (Escape, the X) counts as done: /sw setup brings it back.
-  -- Installed after the build-time Hide so building the frame never marks it done.
-  f:SetScript("OnHide", function() if U.opened then charState().setupDone = true end end)
+  -- leaving the page early (another tab, Escape, the X) counts as done:
+  -- the Setup tab or /ssf setup brings it back any time
+  f:SetScript("OnHide", function()
+    if U.opened then charState().setupDone = true end
+    U.opened = false
+  end)
   -- live status (keybinds, cvars, channel joins) while open
   local acc = 0
   f:SetScript("OnUpdate", function(_, elapsed)
     acc = acc + elapsed
     if acc > 0.5 then acc = 0; U:refresh() end
   end)
-  self.frame = f
+  self.pageFrame = f
   return f
 end
 
 function U:refresh()
-  local f = self.frame
+  local f = self.pageFrame
   if not f or not f:IsShown() then return end
   local pages = self:currentPages()
   for _, pg in pairs(self.pages) do pg.frame:Hide() end
@@ -395,20 +395,20 @@ end
 
 function U:open()
   if InCombatLockdown() then W.print("setup will open after combat") return end
-  self:build()
   self.role = W.role()
   self.page = 1
   self.opened = true
-  self.frame:Show()
+  if addonData.tabs and addonData.tabs.show then addonData.tabs:show("setup") end -- creates the window and this page
+  if not self.pageFrame then self:buildInto(SteaSummonFrame or UIParent) end
   self:refresh()
 end
 
 function U:finish()
   charState().setupDone = true
-  if self.frame then self.frame:Hide() end
   self.opened = false
+  if addonData.tabs and addonData.tabs.built then addonData.tabs:select("queue") end
   W.fire("ROLE_CHANGED", W.role())
-  W.print("setup done. /sw options for every setting, /sw help for the commands, /sw setup to run this again.")
+  W.print("setup done. /ssf options for every setting, /ssf help for the commands, /ssf setup to run this again.")
 end
 
 W.module("setup", U)

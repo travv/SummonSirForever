@@ -1,13 +1,13 @@
--- Ledger panel: the session headline (summons, gold, gold/hr, % paid), a
+-- Ledger tab: the session headline (summons, gold, gold/hr, % paid), a
 -- scrolling body with the last 7 days and 8 weeks, and the open tabs at the
 -- bottom (arrived, not paid yet) with Paid / Block buttons.
--- Open with /sw or the Ledger button on the summon window.
+-- A page inside the summon window (warlock/tabs.lua); /ssf opens it.
 -- Copyright (c) 2026 travv. MIT licensed.
 
 local _, addonData = ...
 local W = addonData.W
 
-local UI = { frame = nil, rows = {}, ROWS = 6 }
+local UI = { page = nil, rows = {}, ROWS = 6 }
 
 local function pctColor(p)
   if p >= 90 then return "green" end
@@ -18,22 +18,20 @@ end
 local function gold(copper) return W.hex("yellow", W.fmtMoney(copper)) end
 local function dim(text) return W.hex("comment", text) end
 
-function UI:build()
-  if self.frame then return self.frame end
+-- builds the ledger page into the summon window; returns the page frame
+function UI:buildInto(parent)
+  if self.page then return self.page end
   local listH = 30 + UI.ROWS * 22 + 8 -- open-tabs heading + rows
-  local f = W.stockWindow("SteaWarlockPanel", UIParent, 380, 520, "Summon ledger") -- no portrait: it hid the first line
-  f:SetPoint("CENTER", UIParent, "CENTER", 260, 0)
-  f:SetFrameStrata("DIALOG")
-  table.insert(UISpecialFrames, "SteaWarlockPanel") -- Escape closes it
+  local f = CreateFrame("Frame", "SteaWarlockLedgerPage", parent)
+  f:SetAllPoints(parent)
+  f:Hide()
 
   -- the inset holds the open tabs at the bottom
-  local inset = W.child(f, "Inset") or f
-  if inset ~= f then
-    f.Inset:ClearAllPoints()
-    f.Inset:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 8)
-    f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
-    f.Inset:SetHeight(listH)
-  end
+  local inset = CreateFrame("Frame", nil, f, "InsetFrameTemplate")
+  inset:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 8)
+  inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
+  inset:SetHeight(listH)
+  f.inset = inset
 
   -- headline: the numbers that matter, in large type
   f.headSub = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -47,7 +45,7 @@ function UI:build()
   f.head:SetWordWrap(false)
 
   -- scrolling body so a week of history never clips
-  f.scroll = CreateFrame("ScrollFrame", "SteaWarlockPanelScroll", f, "UIPanelScrollFrameTemplate")
+  f.scroll = CreateFrame("ScrollFrame", "SteaWarlockLedgerScroll", f, "UIPanelScrollFrameTemplate")
   f.scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -76)
   f.scroll:SetPoint("BOTTOMRIGHT", inset, "TOPRIGHT", -30, 6)
   f.scrollChild = CreateFrame("Frame", nil, f.scroll)
@@ -63,18 +61,16 @@ function UI:build()
   f.npTitle = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   f.npTitle:SetPoint("TOPLEFT", inset, "TOPLEFT", 8, -8)
 
-  -- Options sits in the open-tabs title row, clear of the close button
+  -- Options sits in the open-tabs title row
   f.opts = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
   f.opts:SetSize(70, 20)
   f.opts:SetPoint("TOPRIGHT", inset, "TOPRIGHT", -6, -5)
   f.opts:SetText("Options")
-  f.opts:SetScript("OnClick", function()
-    W.options:open(function(opened) if opened then f:Hide() end end)
-  end)
+  f.opts:SetScript("OnClick", function() W.options:open() end)
   f.opts:SetScript("OnEnter", function(this)
     GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
     GameTooltip:AddLine("Summon service settings")
-    GameTooltip:AddLine("Prices, messages, blocklist, ads, sounds. Also /sw options.", 1, 1, 1, true)
+    GameTooltip:AddLine("Prices, messages, blocklist, ads, sounds. Also /ssf options.", 1, 1, 1, true)
     GameTooltip:Show()
   end)
   f.opts:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -117,8 +113,7 @@ function UI:build()
     UI.rows[i] = r
   end
 
-  f:Hide()
-  self.frame = f
+  self.page = f
   return f
 end
 
@@ -186,7 +181,7 @@ function UI:tabText(s, now)
 end
 
 function UI:refresh()
-  local f = self.frame
+  local f = self.page
   if not f or not f:IsShown() then return end
   local now = W.now()
   local sub, head = self:headline(now)
@@ -225,39 +220,18 @@ function UI:refresh()
   end
 end
 
+-- /ssf: the window on the Ledger tab; again on that tab closes it
 function UI:toggle()
-  local f = self:build()
-  if f:IsShown() then f:Hide() else f:Show(); self:refresh() end
-end
-
--- "Ledger" button in the summon window's button row (left of Menu), added
--- the first time the window exists
-function UI:attachButton()
-  if self.dollar or not SteaSummonFrame then return end
-  local b = CreateFrame("Button", "SteaWarlockLedgerButton", SteaSummonFrame, "UIPanelButtonTemplate")
-  b:SetSize(56, 22)
-  b:SetPoint("TOPRIGHT", SteaSummonFrame, "TOPRIGHT", -66, -72)
-  b:SetText("Ledger")
-  b:SetScript("OnClick", function() UI:toggle() end)
-  b:SetScript("OnEnter", function(this)
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine("Summon ledger")
-    GameTooltip:AddLine("Gold per hour, who still owes, who never paid. Also /sw.", 1, 1, 1, true)
-    GameTooltip:Show()
-  end)
-  b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  self.dollar = b
+  if addonData.tabs then return addonData.tabs:toggle("ledger") end
 end
 
 W.module("panel", UI)
 
 function UI:init()
-  self:build()
   W.on("LEDGER_CHANGED", function() UI:refresh() end)
   W.on("CONFIG_CHANGED", function() UI:refresh() end)
   C_Timer.NewTicker(10, function() UI:refresh() end)
-  hooksecurefunc(addonData.summon, "showSummons", function() UI:attachButton() end)
-  W.command("stats", "stats: open the ledger panel (also just /sw)", function() UI:toggle() end)
+  W.command("stats", "stats: open the ledger tab (also just /ssf)", function() UI:toggle() end)
 end
 
 addonData.panel = UI

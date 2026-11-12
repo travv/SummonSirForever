@@ -72,7 +72,7 @@ local summon = {
   reConfigureFrames = function(self)
     if SteaSummonFrame and not SteaSummonFrame.location then
       -- header line 1, left: where the warlock stands (shared text: counts sit to its right)
-      SteaSummonFrame.location = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+      SteaSummonFrame.location = (SteaSummonFrame.queuePage or SteaSummonFrame):CreateFontString(nil, "ARTWORK", "GameFontHighlight")
       SteaSummonFrame.location:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 62, -27) -- right of the portrait
       SteaSummonFrame.location:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -160, 0)
       SteaSummonFrame.location:SetJustifyH("LEFT")
@@ -82,7 +82,7 @@ local summon = {
 
     if SteaSummonFrame and not SteaSummonFrame.destination then
       -- header line 2, left: where summons go (click to set / unset)
-      SteaSummonFrame.destination = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+      SteaSummonFrame.destination = (SteaSummonFrame.queuePage or SteaSummonFrame):CreateFontString(nil, "ARTWORK", "GameFontHighlight")
       SteaSummonFrame.destination:SetPoint("TOPLEFT", "SteaSummonFrame", "TOPLEFT", 62, -46)
       SteaSummonFrame.destination:SetPoint("RIGHT", "SteaSummonFrame", "RIGHT", -92, 0)
       SteaSummonFrame.destination:SetJustifyH("LEFT")
@@ -92,7 +92,7 @@ local summon = {
 
     if SteaSummonFrame and not SteaSummonFrame.status then
       -- header line 1, right: warlock / clicker counts in the group
-      SteaSummonFrame.status = SteaSummonFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+      SteaSummonFrame.status = (SteaSummonFrame.queuePage or SteaSummonFrame):CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
       SteaSummonFrame.status:SetPoint("TOPRIGHT", "SteaSummonFrame", "TOPRIGHT", -14, -29)
       SteaSummonFrame.status:SetJustifyH("RIGHT")
       SteaSummonFrame.status:SetWordWrap(false)
@@ -655,12 +655,12 @@ local summon = {
       --   line 1: Location ............ Warlocks n  Clickers n
       --   line 2: Destination (click)... [shard] n
       --   row 3:  [Next] [Summon me] ............ [AFK] [Ad] [Ledger] [Menu]
-      local MIN_W, MIN_H = 380, 180
+      local MIN_W, MIN_H = 460, 340 -- room for the setup and ledger tabs
       local HEADER_H = 106
 
       local f = CreateFrame("Frame", "SteaSummonFrame", UIParent, "ButtonFrameTemplate")
       f:SetPoint("CENTER")
-      f:SetSize(400, 340)
+      f:SetSize(480, 400)
       f:SetScale(SteaSummonSave.windowSize)
       f:SetToplevel(true)
       f.minWidth, f.minHeight, f.headerHeight = MIN_W, MIN_H, HEADER_H
@@ -687,6 +687,12 @@ local summon = {
         f.Inset:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -HEADER_H)
         f.Inset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
       end
+
+      --- everything queue-specific sits on one page frame, so the bottom
+      --- tabs (warlock/tabs.lua) can swap it for the Ledger, Ads or Setup page
+      f.queuePage = CreateFrame("Frame", "SteaSummonQueuePage", f)
+      f.queuePage:SetAllPoints(f)
+      if child(f, "Inset") then f.Inset:SetParent(f.queuePage) end
 
       --- what an empty queue says (showSummons fills in the role-specific line)
       local emptyParent = child(f, "Inset") or f
@@ -770,6 +776,7 @@ local summon = {
 
       --- Next button: the secure cast button, keybind "CLICK SteaSummonButton38"
       local nextBtn = addonData.buttons[38].Button
+      nextBtn:SetParent(f.queuePage)
       nextBtn:ClearAllPoints()
       nextBtn:SetSize(30, 30)
       nextBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -68)
@@ -796,7 +803,7 @@ local summon = {
       --- the old portrait "Summon Me" button is replaced by a plain button
       addonData.buttons[39].Button:Hide()
       addonData.buttons[39].Button:SetScript("OnClick", nil)
-      f.meButton = CreateFrame("Button", "SteaSummonMeButton", f, "UIPanelButtonTemplate")
+      f.meButton = CreateFrame("Button", "SteaSummonMeButton", f.queuePage, "UIPanelButtonTemplate")
       f.meButton:SetSize(104, 22)
       if addonData.util:playerCanSummon() then
         f.meButton:SetPoint("TOPLEFT", f, "TOPLEFT", 48, -72)
@@ -853,7 +860,7 @@ local summon = {
           end
         end
 
-        local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", f)
+        local invdest = CreateFrame("Button", "SteaSummonInvisibleSetDestinationButton", f.queuePage)
         invdest:SetPoint("TOPLEFT", f, "TOPLEFT", 58, -44)
         invdest:SetPoint("TOPRIGHT", f, "TOPRIGHT", -90, -44)
         invdest:SetHeight(18)
@@ -870,7 +877,7 @@ local summon = {
 
       --- shard count, right end of the destination line
       if self.isWarlock then
-        f.shards = CreateFrame("Frame", "SteaSummonShardIcon", f)
+        f.shards = CreateFrame("Frame", "SteaSummonShardIcon", f.queuePage)
         f.shards:SetSize(16, 16)
         f.shards:SetPoint("TOPRIGHT", f, "TOPRIGHT", -40, -45)
         f.shards.icon = f.shards:CreateTexture(nil, "ARTWORK")
@@ -890,8 +897,8 @@ local summon = {
         self.shards = self:shardCount()
       end
 
-      --- button row, right side: [AFK] [Ad] [Ledger] [Menu]  (Ledger comes from warlock/panel.lua)
-      f.context = CreateFrame("Button", "SteaSummonContextMenuButton", f, "UIPanelButtonTemplate")
+      --- button row, right side: [AFK] [Ad] [Menu]  (the ledger is a tab now)
+      f.context = CreateFrame("Button", "SteaSummonContextMenuButton", f.queuePage, "UIPanelButtonTemplate")
       f.context:SetSize(52, 22)
       f.context:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -72)
       f.context:SetText("Menu")
@@ -905,9 +912,9 @@ local summon = {
       f.context:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
       if addonData.util:playerCanSummon() then
-        f.adbutton = CreateFrame("Button", "SteaSummonAdButton", f, "UIPanelButtonTemplate")
+        f.adbutton = CreateFrame("Button", "SteaSummonAdButton", f.queuePage, "UIPanelButtonTemplate")
         f.adbutton:SetSize(44, 22)
-        f.adbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -126, -72)
+        f.adbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -66, -72)
         f.adbutton:SetText(L["Ad"])
         f.adbutton:SetScript("OnClick", function()
           addonData.chat:advertise()
@@ -926,9 +933,9 @@ local summon = {
         f.adbutton:SetScript("OnLeave", function() GameTooltip:Hide() end)
         self:adButtonUpdate()
 
-        f.afkbutton = CreateFrame("Button", "SteaSummonAfkButton", f, "UIPanelButtonTemplate")
+        f.afkbutton = CreateFrame("Button", "SteaSummonAfkButton", f.queuePage, "UIPanelButtonTemplate")
         f.afkbutton:SetSize(44, 22)
-        f.afkbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -174, -72)
+        f.afkbutton:SetPoint("TOPRIGHT", f, "TOPRIGHT", -114, -72)
         f.afkbutton:SetText(L["AFK"])
         f.afkbutton:SetScript("OnClick", function()
           addonData.summon:afkToggle()
@@ -1207,6 +1214,11 @@ local summon = {
 
     if self.numwaiting == 0 then
       self.hasSummoned = false
+    end
+
+    -- another tab (ledger, ads, setup) is up: the queue's show rules do not apply
+    if addonData.tabs and addonData.tabs.offQueue and addonData.tabs:offQueue() then
+      show = true
     end
 
     if show then

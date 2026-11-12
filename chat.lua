@@ -183,7 +183,7 @@ local chat = {
       msg = addonData.ads:text()
       targets = addonData.ads:targets()
       if #targets == 0 then
-        cprint("Not in any ad channel (" .. tostring(SteaWarlockDB.adChannels) .. "). Join one, or set them with /sw channels 1, 2, 8")
+        cprint("Not in any ad channel (" .. tostring(SteaWarlockDB.adChannels) .. "). Join one, or set them with /ssf channels 1, 2, 8")
         return
       end
     else
@@ -199,7 +199,7 @@ local chat = {
     end
 
     if addonData.ads and addonData.ads.synced and not addonData.ads:synced() then
-      cprint("Ad not sent: not synced with the main warlock yet (group with them, or /sw lock <name>).")
+      cprint("Ad not sent: not synced with the main warlock yet (group with them, or /ssf lock <name>).")
       return
     end
 

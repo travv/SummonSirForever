@@ -1,4 +1,4 @@
--- /sw queuedebug: print the queue network state in one go, so a removal
+-- /ssf queuedebug: print the queue network state in one go, so a removal
 -- that does nothing can be diagnosed from a paste instead of guesswork.
 -- Copyright (c) 2026 travv. MIT licensed.
 

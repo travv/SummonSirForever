@@ -205,7 +205,7 @@ function D:init()
     end
     local p = D.match(args)
     if not p then
-      W.print("no preset matches", args, "(try /sw dest list)")
+      W.print("no preset matches", args, "(try /ssf dest list)")
       return
     end
     W.db.dest = p.key
