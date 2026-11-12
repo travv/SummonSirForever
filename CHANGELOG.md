@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-w5 (2026-11-11): SummonSir house style
+
+- New default messages, with "sir" and exclamation points. For example:
+  - summon whisper: "Sit back and relax! The summon is on the way, sir :)"
+  - first reply: "Right away, sir! Summon to {dest} is {price}. ..."
+  - ad: "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!"
+- Covers the raid, say and whisper notices, the raid info and clicker nags, the alt whispers, the AFK reply, our three customer replies and the ad.
+- Saved messages still on the old stock wording are upgraded at login. Anything you wrote yourself is kept.
+- Outgoing chat is tagged `[SummonSir]` instead of `[SteaSummon]`. Summon phrases with either tag are still recognized.
+
 ## 1.0.0-w4 (2026-11-11): settings fix
 
 - **Fix: the Options button closed the ledger and opened nothing.** The bundled Ace3 (AceConfigDialog r81, from around 2020) registers settings pages through `InterfaceOptions_AddCategory`, which the Forever client doesn't have. The page was never added, and the original options likely errored at login.

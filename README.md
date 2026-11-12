@@ -6,7 +6,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w4). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w5). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
@@ -62,7 +62,7 @@ Each window gets one role. Set it with `/sw role <role>`.
 
 **Services-channel ads**
 - One post per click, with the original cooldown.
-- The ad text is a template: `{dest} summons {price}! /w {lock} 123`.
+- The ad text is a template. The default is `Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!`
 - While grouped, the warlock keeps the advertiser's destination, price and name up to date.
 
 **Fixes to the original**

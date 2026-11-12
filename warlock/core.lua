@@ -48,15 +48,30 @@ W.DEFAULTS = {
   autoBlockHours = 24,
   alertSound = true,      -- clicker banner plays a sound
   adChannel = "Services",
-  adTemplate = "{dest} summons {price}! /w {lock} 123",
-  replyText = "Summon to {dest}: {price}. Invite sent, accept the summon within 2 min. Pay by trade on arrival.",
-  wrongDestText = "Sorry, I'm summoning to {dest} right now, not {asked}.",
-  advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest} ({price}).",
+  adTemplate = "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",
+  replyText = "Right away, sir! Summon to {dest} is {price}. Invite sent! Accept the summon within 2 min and pay by trade when you land!",
+  wrongDestText = "So sorry, sir! I'm summoning to {dest} right now, not {asked}!",
+  advertiserReplyText = "Right this way, sir! Whisper {lock} \"123\" for a summon to {dest} ({price})!",
   summons = {},           -- { id, name, t, dest, price, arrived, paid, paidAmount, paidAt, nonPayer }
   payments = {},          -- { name, t, amount, summonId }
   blocklist = {},         -- name -> { untilT, at, reason }
   chars = {},             -- character name -> { role }
 }
+
+-- earlier stock wording: saved texts that still match get the new defaults
+W.STOCK = {
+  adTemplate = "{dest} summons {price}! /w {lock} 123",
+  replyText = "Summon to {dest}: {price}. Invite sent, accept the summon within 2 min. Pay by trade on arrival.",
+  wrongDestText = "Sorry, I'm summoning to {dest} right now, not {asked}.",
+  advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest} ({price}).",
+}
+
+function W.upgradeStock(db)
+  for k, old in pairs(W.STOCK) do
+    if db[k] == old then db[k] = W.DEFAULTS[k] end
+  end
+  return db
+end
 
 -- fill missing keys (one level deep) without touching saved values
 function W.applyDefaults(db, defaults)
@@ -252,7 +267,7 @@ end
 
 local function onLoaded(name)
   if name ~= addonName then return end
-  SteaWarlockDB = W.applyDefaults(SteaWarlockDB or {}, W.DEFAULTS)
+  SteaWarlockDB = W.upgradeStock(W.applyDefaults(SteaWarlockDB or {}, W.DEFAULTS))
   W.db = SteaWarlockDB
   for _, mod in ipairs(W.modules) do
     if mod.init then

@@ -31,6 +31,21 @@ summonWords[22] ="123 summons"
 summonWords[23] ="123 summon"
 summonWords[24] ="[SteaSummon] 123"
 
+-- SummonSir house style: "sir" and exclamation points. %p player, %l subzone,
+-- %z zone, %t summon phrase. Saved texts still on the old stock wording get
+-- upgraded at login; anything you typed yourself is left alone.
+local FLAVOR = {
+  raidchat = "Now summoning Sir %p!",
+  whisperchat = "Sit back and relax! The summon is on the way, sir :)",
+  saychat = "Summoning Sir %p! Click the portal please!",
+  raidinfo = "Summons are open, sir! Type %t for a summon, -%t to cancel, or %t again if one fails!",
+  clickersnag = "Need more clickers at %l, %z! Come help, sir!",
+  clicknag = "Click the summoning portal, sir!",
+  altWhisper = "You're in the summon queue, sir! Whisper me an alt name if you'd rather not wait online.",
+  altGetOnlineWhisper = "You're near the top of the summon queue, sir! Get online now!",
+  afkText = "I'm AFK for a moment, sir! I'll be right back!",
+}
+
 settings = {
   init = function(self)
     addonData.debug:registerCategory("settings")
@@ -105,6 +120,24 @@ settings = {
       SteaSummonSave.afkText = L["afktext"]
     end
 
+    -- upgrade untouched stock texts to the SummonSir wording
+    local STOCK = {
+      raidchat = L["Summoning %p"],
+      whisperchat = L["Summoning you to %l in %z"],
+      saychat = L["Summoning %p, please click the portal"],
+      raidinfo = L["raidinfo"],
+      clickersnag = L["clickersnag"],
+      clicknag = L["clicknag"],
+      altWhisper = L["You are in the summon queue. Whisper me an alt name if you don't want to wait online."],
+      altGetOnlineWhisper = L["You are near the top of the summon queue. Get online now."],
+      afkText = L["afktext"],
+    }
+    for k, v in pairs(FLAVOR) do
+      if SteaSummonSave[k] == nil or SteaSummonSave[k] == STOCK[k] then
+        SteaSummonSave[k] = v
+      end
+    end
+
     if SteaSummonSave.warlocksAssist == nil then
       SteaSummonSave.warlocksAssist = false
       SteaSummonSave.finalLeadership = false
@@ -170,6 +203,9 @@ settings = {
     SteaSummonSave.autoAccept = 1
     SteaSummonSave.delayLeadership = true
     SteaSummonSave.convertToRaid = false
+    for k, v in pairs(FLAVOR) do
+      SteaSummonSave[k] = v
+    end
   end,
 
   saveOnLogout = function(self, event, ...)
@@ -186,6 +222,7 @@ settings = {
     end
     local function norm(s)
       s = string.lower(s)
+      s = string.gsub(s, "^%s*%[[^%]]*%]", "") -- "[SummonSir] 123" from another addon user
       s = string.gsub(s, "^[%s%p]+", "")
       s = string.gsub(s, "[%s%p]+$", "")
       return s
