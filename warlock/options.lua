@@ -141,6 +141,28 @@ function O:build()
         },
       },
 
+      ---------------------------------------------------------------- big button
+      bigGroup = {
+        order = 15, type = "group", inline = true, name = "Big Summon Next button (warlock)",
+        args = {
+          show = {
+            order = 1, type = "toggle", name = "Show it",
+            desc = "A big button that does exactly what your Summon Next keybind does. Drag its top strip to move it.",
+            get = function() return db().bigButton ~= false end,
+            set = function(_, v) db().bigButton = v; changed() end,
+          },
+          scale = {
+            order = 2, type = "range", name = "Size", min = 0.6, max = 2, step = 0.05, isPercent = true,
+            get = function() return db().bigScale or 1 end,
+            set = function(_, v) db().bigScale = v; changed() end,
+          },
+          reset = {
+            order = 3, type = "execute", name = "Reset position",
+            func = function() W.commands.big("reset") end,
+          },
+        },
+      },
+
       ---------------------------------------------------------------- destination + price
       destGroup = {
         order = 20, type = "group", inline = true, name = "Destination and price",

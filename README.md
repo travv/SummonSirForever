@@ -6,7 +6,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w6). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w7). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
@@ -76,6 +76,12 @@ Each window gets one role. Set it with `/sw role <role>`.
 - Block them and remove them.
 - Whisper them any message.
 
+**Big Summon Next button (warlock)**
+- A big button showing who's next, how many are queued and your shard count. Clicking it does exactly what your Summon Next keybind does.
+- It switches to "Life Tap" when you're low on mana and turns red when you're out of shards.
+- Drag its top strip to move it. Its **Clear** button empties the queue (it asks first).
+- Size, show or hide, and reset position are in settings, or use `/sw big on|off|reset`.
+
 **Stable queue rows**
 - Rows don't shift while your mouse is over the list, so you don't click the wrong person.
 - A row stuck on "pending" with no cast going returns to "requested" after 15 seconds.
@@ -128,6 +134,8 @@ Every setting below is also on a **Summon service** page in **Settings > AddOns 
 | `/sw plain on\|off` | Plain messages instead of the SummonSir lines |
 | `/sw say <type>` | Print a sample message of one type |
 | `/sw setup` | Run the first-time setup again |
+| `/sw big on\|off\|reset` | Big Summon Next button |
+| `/sw clear` | Clear the whole queue (asks first) |
 | `/sw adtext <template>` / `channel <name>` / `lock <name>` | Ad text, ad channel, warlock name in ads |
 | `/sw testportal` | Preview the clicker banner |
 

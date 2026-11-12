@@ -45,6 +45,8 @@ W.DEFAULTS = {
   service = true,         -- warlock: auto-reply + auto-invite people who whisper a request
   maxQueue = 30,          -- queue cap for new customers (0 = no cap); a raid holds 40
   plainMode = false,      -- short serious messages instead of the SummonSir lines
+  bigButton = true,       -- warlock: the big Summon Next button
+  bigScale = 1,
   msg = {},               -- message type -> { mode, line, custom } (messages.lua)
   graceMinutes = 10,      -- unpaid this long after arriving = never paid
   autoBlock = true,       -- block never-paid customers automatically

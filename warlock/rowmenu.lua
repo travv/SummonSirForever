@@ -51,6 +51,7 @@ function R:open(owner, name)
       addonData.gossip:arrived(name, true)
       W.print("blocked", name)
     end)
+    root:CreateButton("Clear whole queue...", function() addonData.summon:clearList() end)
     root:CreateDivider()
     local sub = root:CreateButton("Whisper")
     local M = W.messages

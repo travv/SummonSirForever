@@ -118,11 +118,34 @@ local gossip = {
   end,
 
   ---------------------------------
+  -- GUID -> full "First Last" name from the group roster. On Forever
+  -- GetPlayerInfoByGUID may give only the first name, which never matches
+  -- self.me, so nobody is ever leader and leader-only actions go nowhere.
+  rosterNames = function(self)
+    local out = { [UnitGUID("player")] = self.me }
+    local function add(unit)
+      local guid = UnitGUID(unit)
+      if guid then
+        local n1, n2 = UnitName(unit)
+        if n1 then out[guid] = (n2 and n2 ~= "") and (n1 .. " " .. n2) or n1 end
+      end
+    end
+    if IsInRaid() then
+      for i = 1, 40 do add("raid" .. i) end
+    else
+      for i = 1, 4 do add("party" .. i) end
+    end
+    out[UnitGUID("player")] = self.me
+    return out
+  end,
+
   postInit = function(self)
     table.sort(self.votingBooth)
     wipe(self.netList)
+    local names = self:rosterNames()
     for _,v in pairs(self.votingBooth) do
       local _, _, _, _, _, name = GetPlayerInfoByGUID(v)
+      name = names[v] or name
       db("gossip", "netlist:", name)
       if not addonData.util:isInTable(self.netList, name) then
         table.insert(self.netList, name)
@@ -424,8 +447,18 @@ local gossip = {
       if self:noComms() then
         return
       end
+      local leader = self.netList[1]
+      if self.inInit or not leader or leader == self.me or not IsInGroup()
+          or not (UnitInParty(leader) or UnitInRaid(leader)) then
+        -- no reachable queue leader: set it here and tell the group directly
+        addonData.summon:status(player, status)
+        if IsInGroup() then
+          self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, self:groupText())
+        end
+        return
+      end
       db("gossip", ">> status >> WHISPER", player, status)
-      self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, "WHISPER", self.netList[1])
+      self:SendCommMessage(self.channel, "s " .. player .. "+" .. status, "WHISPER", leader)
     end
   end,
 
@@ -455,8 +488,20 @@ local gossip = {
       if self:noComms() then
         return
       end
-      db("gossip", ">> arrived >> WHISPER", self.netList[1], player)
-      self:SendCommMessage(self.channel, "a " .. player .. " ".. cancelText, "WHISPER", self.netList[1])
+      local leader = self.netList[1]
+      if self.inInit or not leader or leader == self.me or not IsInGroup()
+          or not (UnitInParty(leader) or UnitInRaid(leader)) then
+        -- no reachable queue leader (solo, mid-handshake, or a leader name
+        -- that isn't in the group): remove here and tell the group directly
+        addonData.summon:arrived(player, cancel)
+        if IsInGroup() then
+          self:SendCommMessage(self.channel, "a " .. player .. " " .. cancelText, self:groupText())
+        end
+        addonData.summon:showSummons()
+        return
+      end
+      db("gossip", ">> arrived >> WHISPER", leader, player)
+      self:SendCommMessage(self.channel, "a " .. player .. " ".. cancelText, "WHISPER", leader)
     end
   end,
 

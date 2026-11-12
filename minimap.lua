@@ -43,7 +43,7 @@ function appbutton:menu(button)
 
     if (addonData.summon.isAtDestination() or addonData.summon.zone == "") and addonData.summon.numwaiting > 0 then
       table.insert(submenu.menuList, { text = L["Clear Summon List"], notCheckable = true,
-                              icon = "Interface\\Buttons\\UI-GroupLoot-Pass-Up", func = addonData.summon.clearList })
+                              icon = "Interface\\Buttons\\UI-GroupLoot-Pass-Up", func = function() addonData.summon:clearList() end }) -- always ask first
     end
 
     if UnitIsGroupLeader("player") then

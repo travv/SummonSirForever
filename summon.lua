@@ -1060,14 +1060,16 @@ local summon = {
         });
 
         --- Cancel Button
-        cancelClick = function(_, button, worked)
-          if button == "LeftButton" and worked then
+        -- OnClick, not OnMouseUp: modern clients don't pass the "released
+        -- inside" flag the old handler waited for, so the X did nothing
+        cancelClick = function(_, button)
+          if button == nil or button == "LeftButton" then
             addonData.gossip:arrived(player, true)
             db("summon.display","cancelling", player)
           end
         end
 
-        addonData.buttons[i].Cancel:SetScript("OnMouseUp", cancelClick)
+        addonData.buttons[i].Cancel:SetScript("OnClick", cancelClick)
 
         if rec then
           --- Next Button
@@ -1076,7 +1078,15 @@ local summon = {
               next = true
               self.nextIdx = recIdx
               self:SetMacro(38, player)
-              addonData.buttons[38].Button:SetScript("PreClick", summonClick)
+              -- PreClick runs for the mouse and the keybind, but on both the
+              -- down and up half of a press: act only on the half the secure
+              -- cast uses (ActionButtonUseKeyDown), so announces go out once
+              addonData.buttons[38].Button:SetScript("PreClick", function(this, button, down)
+                if down ~= nil and down ~= (C_CVar.GetCVarBool("ActionButtonUseKeyDown") and true or false) then
+                  return
+                end
+                summonClick(this, button)
+              end)
               addonData.buttons[38].Button:Show()
             end
             listActive = true

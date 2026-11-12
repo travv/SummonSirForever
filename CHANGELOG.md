@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0-w7 (2026-11-11): removal fixes, big Summon Next button
+
+### Fixes
+- **The X next to a player, and Clear Summon List, did nothing.** There were two causes:
+  - The X waited for a "released inside the button" flag that modern clients don't pass. It's now a normal click.
+  - Every removal is routed through the queue leader. On Forever the leader list was built from `GetPlayerInfoByGUID` names, which can be first-name-only ("Summ" instead of "Summ Bert"), so nobody was ever leader and removals were whispered to nobody. The list now uses full roster names. When no reachable leader exists (solo, mid-handshake, or a leader not in the group), removals and status changes apply locally and are sent to the group directly.
+- The minimap's Clear Summon List always asks first.
+- The Next button and keybind announced twice per press (PreClick fires on both mouse-down and mouse-up). They now act once, on the same half of the press as the cast.
+
+### New
+- **Big Summon Next button** for the warlock, with a Clear button. `/sw big`, `/sw clear`, and options under Settings > Summon service.
+- "Clear whole queue..." in the right-click menu on queue names.
+
 ## 1.0.0-w6 (2026-11-11): Lazy Summoner parity, first-run setup
 
 Covers what The Lazy Summoner does, as our own code.
