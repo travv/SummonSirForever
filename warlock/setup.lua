@@ -242,20 +242,20 @@ local function pageAdvertiser(parent)
     "Only channels this character has joined are listed. Missing one? /join Services in chat and it shows up here.")
 
   text(p, "GameFontNormal", "cyan", 0, -176):SetText("2. Main warlock's name")
-  local lockOut = text(p, "GameFontHighlight", "comment", 190, -196, 240)
+  local lockOut = text(p, "GameFontHighlightSmall", "comment", 190, -198, 250)
   local lock = editBox(p, 0, -192, 170, function(v)
     W.db.lockName = v ~= "" and v or nil
     W.fire("CONFIG_CHANGED")
     U:refresh()
   end)
-  local preview = text(p, "GameFontHighlightSmall", "comment", 0, -224, 430)
+  local preview = text(p, "GameFontHighlightSmall", "comment", 0, -236, 430)
 
   return { frame = p, refresh = function()
     picker.refresh()
     if not lock:HasFocus() then lock:SetText(W.db.lockName or "") end
     local age = W.db.remoteAt and (W.now() - W.db.remoteAt)
     lockOut:SetText((age and age < 120) and W.hex("green", "synced: " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
-      or W.hex("orange", "Group with the warlock to sync their destination and price. Ungrouped, type their name and it syncs by whisper."))
+      or W.hex("orange", "Not synced yet. Group with them, or type their name."))
     preview:SetText("Your ad: " .. W.hex("fg", W.ads:text()) .. "\n\n"
       .. W.hex("comment", "The ad follows the main warlock's destination and price, and the middle sentence changes with the destination. The Ads tab has the Post ad button: one click posts once to each checked channel."))
   end }

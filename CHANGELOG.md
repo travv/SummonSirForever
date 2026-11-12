@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-w28 (2026-11-12): saved settings catch up, two layout fixes
+
+- If you ran an earlier build, the first reply and the arrival reminder were still on in your saved settings even though they are off by default now. They turn off once at login; a line you picked yourself or wrote yourself is kept, and turning them back on afterwards sticks.
+- Advertiser setup page: the "not synced" text no longer runs into the ad preview.
+- Queue tab: a warlock under level 20 saw "the warlock sets it" on the destination line; it now shows the click-to-pin hint for anyone in the warlock role.
+
 ## 1.0.0-w27 (2026-11-12): arrival reminder opt-in, discounts are payments
 
 - **The arrival reminder is off by default.** Customers expect to trade the warlock on arrival, so the whisper is a checkbox on the warlock setup page and under Options > Customers for anyone who wants it. The grace timer and never-paid block run either way.

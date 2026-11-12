@@ -174,8 +174,23 @@ end
 
 W.module("messages", M)
 
+-- types that became off-by-default (w24 first reply, w26 arrival reminder):
+-- a saved "random" is the old default, not a choice, so it turns off once;
+-- fixed / custom / off are choices and stay
+function M:migrateDefaults(db)
+  if db.msgDefaultsV2 then return end
+  db.msg = db.msg or {}
+  for kind, t in pairs(M.TYPES) do
+    if t.defaultMode == "off" and db.msg[kind] and db.msg[kind].mode == "random" then
+      db.msg[kind].mode = "off"
+    end
+  end
+  db.msgDefaultsV2 = true
+end
+
 function M:init()
   self:migrate(W.db)
+  self:migrateDefaults(W.db)
   W.command("plain", "plain on|off: short serious messages instead of the SummonSir lines", function(args)
     if args == "on" then W.db.plainMode = true elseif args == "off" then W.db.plainMode = false end
     W.print("plain mode:", W.db.plainMode and "on" or "off")

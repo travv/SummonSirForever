@@ -1147,8 +1147,9 @@ local summon = {
 
     --- clickers and advertisers cannot pin a destination: show the warlock's
     --- instead of the "click to summon" hint (the synced one for advertisers)
-    if SteaSummonFrame.destination and self.zone == "" and not addonData.util:playerCanSummon() then
-      local Wk = addonData.W
+    local Wk = addonData.W
+    local isServiceLock = Wk and Wk.role and Wk.role() == "warlock"
+    if SteaSummonFrame.destination and self.zone == "" and not isServiceLock then
       local remote = Wk and Wk.role and Wk.role() == "advertiser" and Wk.db and Wk.db.remoteDest
       if remote and remote ~= "" then
         SteaSummonFrame.destination:SetText("|cffffd200Destination:|r " .. remote .. " |cff808080(from the warlock)|r")
