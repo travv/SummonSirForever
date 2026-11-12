@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-w18 (2026-11-12): LookingForGroup is an ad channel
+
+- The default ad channels are **General, Trade, Services, LookingForGroup**. LookingForGroup is the one global channel and players opt in to it, so the ad belongs there (Travis, 2026-11-12). A saved w16 default ("General, Trade, Services") picks it up once; a custom list is kept.
+
 ## 1.0.0-w17 (2026-11-12): one window with tabs, /ssf
 
 - **One window, four tabs along the bottom: Queue, Ledger, Ads, Setup.** Every character sees every tab, so a clicker can read the ledger and the advertiser can watch the queue. The tabs are the game's own (the character-frame style). Hover a tab for what it holds; a second press on the current tab closes the window.
