@@ -336,9 +336,9 @@ function V:init()
     W.print("role:", W.role())
   end)
 
-  W.command("price", "price <80s|1g|1g50s> [destination]", function(args)
+  W.command("price", "price <1g|80s|1g50s|1> [destination]: a bare number is gold", function(args)
     local amt, destText = string.match(args, "^(%S+)%s*(.-)$")
-    local copper = W.parseMoney(amt)
+    local copper = W.parseMoneyUser(amt)
     if not copper then
       W.print("price:", W.fmtMoney(W.priceFor(W.db.dest)), "(usage: /sw price 1g [tb])")
       return
@@ -357,7 +357,7 @@ function V:init()
 
   W.command("service", "service on|off: auto-reply and invite people who whisper", function(args)
     if args == "on" then W.db.service = true elseif args == "off" then W.db.service = false end
-    W.print("service replies:", W.db.service and "on" or "off")
+    W.print("auto-reply and invite:", W.db.service and "on" or "off")
   end)
 
   W.command("cap", "cap <n>: queue cap for new customers (0 = none)", function(args)

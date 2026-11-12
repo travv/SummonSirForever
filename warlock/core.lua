@@ -249,6 +249,20 @@ function W.parseMoney(text)
   return math.floor(total + 0.5)
 end
 
+-- what a person types into a price box: a bare number is gold ("1" = 1g),
+-- "1g50" is 1g 50s; everything parseMoney takes still works
+function W.parseMoneyUser(text)
+  if not text then return nil end
+  local t = string.lower(string.gsub(text, "%s+", ""))
+  if t == "" then return nil end
+  if string.match(t, "^%d+%.?%d*$") then
+    return math.floor(tonumber(t) * 10000 + 0.5)
+  end
+  local g, s = string.match(t, "^(%d+)g(%d+)$")
+  if g then return tonumber(g) * 10000 + tonumber(s) * 100 end
+  return W.parseMoney(t)
+end
+
 ---------------------------------
 -- roles
 ---------------------------------
@@ -369,6 +383,12 @@ function W.command(name, help, fn)
   if help then table.insert(W.helpLines, "/sw " .. help) end
 end
 
+function W.help()
+  W.print("commands (bare /sw opens the ledger):")
+  for _, line in ipairs(W.helpLines) do print("  " .. line) end
+end
+W.command("help", "help: this list", W.help)
+
 function W.slash(msg)
   msg = msg or ""
   local cmd, rest = string.match(msg, "^%s*(%S*)%s*(.-)%s*$")
@@ -378,8 +398,8 @@ function W.slash(msg)
   if fn then
     fn(rest or "")
   else
-    W.print("commands:")
-    for _, line in ipairs(W.helpLines) do print("  " .. line) end
+    W.print("no such command:", cmd)
+    W.help()
   end
 end
 

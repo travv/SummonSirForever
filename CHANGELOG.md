@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0-w14 (2026-11-12): setup walkthrough and settings page teach the features
+
+- **Setup is three steps, not four.** The welcome text sits on the role page, and clicking a role moves straight on to that role's page. Hover a role for what it does.
+- **Warlock page checks your Summon Next key** (green "Bound to F" or an orange line with the menu path), the same way the clicker page checks Interact. Boxes save when you press Enter or click away, not on every keystroke, so a half-typed price is never saved. The sample reply updates live.
+- **Prices you type are gold by default:** "1" means 1g, "1g50" means 1g 50s. 1g, 80s and 1g50s still work. Applies to setup, the settings page and /sw price.
+- **Clicker page, new step 3: hear the alert in the background.** One button turns on the game's "sound while inactive" setting. Clicker windows streamed from the VM are never the focused window, so without it the PORTAL UP sound was silent. Also a toggle on the settings page.
+- **Advertiser page offers Join buttons** for channels you listed by name but have not joined, and explains why a number alone cannot be joined.
+- **Done page** names your actual Summon Next key and points at /sw help.
+- **/sw help** lists every command (the settings intro and done page now say so; bare /sw opens the ledger, an unknown command prints the list).
+- **Settings page gains a "Summon window" group:** show always / while someone is in line / while I am in line / never, and the queue row size. The price help and the Interact key hint use the same wording as setup.
+- Setup opens on PLAYER_LOGIN (4 s in) instead of right at addon load, so the per-character flag is keyed by the full two-word name. Building the setup frame no longer counts as finishing it.
+- "/sw service" prints "auto-reply and invite: on", matching the settings label.
+
 ## 1.0.0-w13 (2026-11-12): the summon window explains itself
 
 A polish pass on the window everyone looks at, so a crew member who never read a doc can tell what each thing means.

@@ -12,8 +12,8 @@ local function db() return W.db end
 local function changed() W.fire("CONFIG_CHANGED") end
 
 local function moneyValidate(_, val)
-  if W.parseMoney(val) then return true end
-  return "Use an amount like 80s, 1g or 1g50s"
+  if W.parseMoneyUser(val) then return true end
+  return "Use an amount like 1g, 80s, 1g50s, or just 1 (gold)"
 end
 
 -- destination dropdown: "" = your current zone, then presets A-Z
@@ -112,7 +112,7 @@ function O:build()
     args = {
       intro = {
         order = 0, type = "description", fontSize = "medium",
-        name = "Settings for running a summon service. The same settings are also slash commands: type /sw in chat for the list.",
+        name = "Settings for running a summon service. The same settings are also slash commands: type /sw help in chat for the list (bare /sw opens the ledger).",
       },
       rerunSetup = {
         order = 1, type = "execute", name = "Run setup again",
@@ -137,6 +137,33 @@ function O:build()
               .. "Clicker: shows a big alert when the portal is up.\n"
               .. "Advertiser: shows a Post ad button for the ad channel.\n"
               .. W.hex("comment", "Saved per character."),
+          },
+        },
+      },
+
+      ---------------------------------------------------------------- summon window
+      windowGroup = {
+        order = 12, type = "group", inline = true, name = "Summon window",
+        args = {
+          show = {
+            order = 1, type = "select", name = "Show the window", width = "double",
+            desc = "The warlock's window holds AFK, Ad, Ledger and Menu, so \"always\" is the default there. Escape or the X hides it until the Menu or minimap button brings it back.",
+            values = { [1] = "Always", [2] = "Only while someone is in line", [3] = "Only while I am in line", [4] = "Never" },
+            sorting = { 1, 2, 3, 4 },
+            get = function() return SteaSummonSave and SteaSummonSave.show or 1 end,
+            set = function(_, v)
+              SteaSummonSave.show = v
+              if addonData.summon then addonData.summon.show = nil; addonData.summon:showSummons() end
+            end,
+          },
+          listSize = {
+            order = 2, type = "range", name = "Queue row size", min = 0.7, max = 1.5, step = 0.05, isPercent = true,
+            desc = "Scale of the names in the queue. Widen the window if the time column clips.",
+            get = function() return SteaSummonSave and SteaSummonSave.listSize or 1 end,
+            set = function(_, v)
+              SteaSummonSave.listSize = v
+              if SteaSummonButtonFrame then SteaSummonButtonFrame:SetScale(v) end
+            end,
           },
         },
       },
@@ -176,10 +203,10 @@ function O:build()
           },
           price = {
             order = 2, type = "input", name = "Default price", width = "half",
-            desc = "Per summon, e.g. 80s, 1g, 1g50s",
+            desc = "Per summon: 1g, 80s, 1g50s, or just a number for gold.",
             validate = moneyValidate,
             get = function() return W.fmtMoney(db().price) end,
-            set = function(_, v) db().price = W.parseMoney(v); changed() end,
+            set = function(_, v) db().price = W.parseMoneyUser(v); changed() end,
           },
           destPrice = {
             order = 3, type = "input", name = "Price for this destination", width = "normal",
@@ -193,7 +220,7 @@ function O:build()
             set = function(_, v)
               local d = db().dest
               if not d then return end
-              db().prices[d] = (v ~= "" and W.parseMoney(v) or nil)
+              db().prices[d] = (v ~= "" and W.parseMoneyUser(v) or nil)
               changed()
             end,
           },
@@ -356,6 +383,12 @@ function O:build()
             get = function() return db().alertSound end,
             set = function(_, v) db().alertSound = v end,
           },
+          background = {
+            order = 1.5, type = "toggle", name = "Hear it in the background", width = "full",
+            desc = "Game setting: play sound while another window has focus. Clicker windows streamed from the VM are never the focused window, so without this the alert is silent.",
+            get = function() return C_CVar.GetCVar("Sound_EnableSoundWhenGameIsInactive") == "1" end,
+            set = function(_, v) pcall(C_CVar.SetCVar, "Sound_EnableSoundWhenGameIsInactive", v and "1" or "0") end,
+          },
           test = {
             order = 2, type = "execute", name = "Test the banner",
             func = function() W.commands.testportal("") end,
@@ -366,7 +399,7 @@ function O:build()
               local key = GetBindingKey("INTERACTTARGET")
               if key then return "Interact With Target is bound to " .. W.hex("yellow", key) .. "." end
               return W.hex("red", "Interact With Target is not bound.")
-                .. " Bind it in Key Bindings > Targeting, and run /console SoftTargetInteract 3."
+                .. " Bind it under Key Bindings > Targeting > Interact With Target, and turn on soft interact (the clicker page of /sw setup does both checks)."
             end,
           },
         },

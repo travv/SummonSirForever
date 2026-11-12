@@ -1,18 +1,22 @@
--- One-time setup for new users: welcome, pick a role, set up that role, done.
+-- One-time setup for new users: pick a role, set up that role, done.
 -- Shows once per character on first login; /sw setup brings it back.
+-- Each page teaches one thing and shows whether it worked (green / orange).
 -- Copyright (c) 2026 travv. MIT licensed.
 
 local _, addonData = ...
 local W = addonData.W
 
-local U = { frame = nil, page = 1, pages = {}, role = nil }
+local U = { frame = nil, page = 1, pages = {}, role = nil, opened = false }
 
 local ROLE_INFO = {
-  warlock = { label = "Warlock", desc = "You cast the summons. Customers get replies, invites and a queue spot, and every payment is tracked." },
-  clicker = { label = "Clicker", desc = "You help click the portal. A big banner tells you when to press your Interact key." },
-  advertiser = { label = "Advertiser", desc = "You post the ad in a city. One click per post; whispers get pointed at the warlock." },
+  warlock = { label = "Warlock", desc = "You cast the summons. People who whisper you get a reply, an invite and a place in line; every payment is tracked in the ledger." },
+  clicker = { label = "Clicker", desc = "You help click the portal. A big PORTAL UP banner tells you when to press your Interact key." },
+  advertiser = { label = "Advertiser", desc = "You post the ad in a city. One click per ad round; people who whisper you get pointed at the warlock (or invited, when you have assist)." },
 }
 local ROLE_ORDER = { "warlock", "clicker", "advertiser" }
+local NEXT_BINDING = "CLICK SteaSummonButton38:LeftButton"
+local BIND_PATH_INTERACT = "Key Bindings > Targeting > Interact With Target"
+local BIND_PATH_NEXT = "Key Bindings > AddOns > SummonSirForever > Summon Next"
 
 local function charState()
   local me = W.me()
@@ -33,14 +37,19 @@ local function text(parent, font, r, x, y, width)
   return fs
 end
 
-local function editBox(parent, x, y, width, onChange)
+-- saves on Enter or when you click away (not on every keystroke, so a
+-- half-typed price never gets saved or broadcast); onPreview runs live
+local function editBox(parent, x, y, width, onCommit, onPreview)
   local e = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
   e:SetSize(width or 160, 20)
   e:SetPoint("TOPLEFT", x + 6, y)
   e:SetAutoFocus(false)
   e:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
   e:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-  e:SetScript("OnTextChanged", function(self, user) if user then onChange(self:GetText()) end end)
+  e:SetScript("OnEditFocusLost", function(self) onCommit(self:GetText()) end)
+  if onPreview then
+    e:SetScript("OnTextChanged", function(self, user) if user then onPreview(self:GetText()) end end)
+  end
   return e
 end
 
@@ -63,45 +72,54 @@ local function button(parent, label, width, onClick)
   return b
 end
 
+-- "Bound to F" in green, or an orange hint with the menu path
+local function bindingStatus(binding, path)
+  local key = GetBindingKey(binding)
+  if key and key ~= "" then return W.hex("green", "Bound to " .. key) end
+  return W.hex("orange", "Not bound yet. " .. path .. ". This line updates when you're done.")
+end
+
 ---------------------------------------------------------------- pages
 -- each page: { frame, refresh = function() } built once
-
-local function pageWelcome(parent)
-  local p = CreateFrame("Frame", nil, parent)
-  p:SetAllPoints()
-  local t = text(p, "GameFontNormalHuge", "purple", 0, 0)
-  t:SetText("Welcome, sir!")
-  local b = text(p, "GameFontHighlight", "fg", 0, -40, 420)
-  b:SetText("SummonSirForever runs a warlock summon service: one-button summons, replies and invites for "
-    .. "customers, a payment ledger, a never-paid blocklist, clicker alerts and ads.\n\n"
-    .. "This takes about a minute. Each window (warlock, clickers, advertiser) runs it once.")
-  b:SetSpacing(3)
-  return { frame = p }
-end
 
 local function pageRole(parent)
   local p = CreateFrame("Frame", nil, parent)
   p:SetAllPoints()
-  local t = text(p, "GameFontNormalLarge", "purple", 0, 0)
-  t:SetText("What does this window do?")
-  local desc = text(p, "GameFontHighlight", "fg", 0, -120, 420)
+  local t = text(p, "GameFontNormalHuge", "purple", 0, 0)
+  t:SetText("Welcome, sir!")
+  local intro = text(p, "GameFontHighlight", "fg", 0, -34, 430)
+  intro:SetText("SummonSirForever runs a warlock summon service. Each window (warlock, clickers, advertiser) runs this once. Pick what this window does:")
+  intro:SetSpacing(2)
   local btns = {}
   for i, role in ipairs(ROLE_ORDER) do
     local b = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
     b:SetSize(136, 40)
-    b:SetPoint("TOPLEFT", (i - 1) * 148, -36)
+    b:SetPoint("TOPLEFT", (i - 1) * 148, -84)
     b:SetNormalFontObject("GameFontNormalLarge")
     b:SetHighlightFontObject("GameFontHighlightLarge")
     b:SetText(ROLE_INFO[role].label)
-    b:SetScript("OnClick", function() U.role = role; W.setRole(role); U:refresh() end)
+    b:SetScript("OnClick", function()
+      U.role = role
+      W.setRole(role)
+      U:go(2) -- straight on to that role's page
+    end)
+    b:SetScript("OnEnter", function(this)
+      GameTooltip:SetOwner(this, "ANCHOR_BOTTOM")
+      GameTooltip:AddLine(ROLE_INFO[role].label)
+      GameTooltip:AddLine(ROLE_INFO[role].desc, 1, 1, 1, true)
+      GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
     btns[role] = b
   end
+  local desc = text(p, "GameFontHighlight", "fg", 0, -140, 430)
+  desc:SetSpacing(2)
   return { frame = p, refresh = function()
     for role, b in pairs(btns) do
-      -- the chosen role stays lit (stock button highlight), the others are plain
       if role == U.role then b:LockHighlight() else b:UnlockHighlight() end
     end
-    desc:SetText(ROLE_INFO[U.role].desc .. "\n\n" .. W.hex("comment", "You can change this later with /sw role."))
+    desc:SetText(W.hex("comment", "This window is set up as: ") .. W.hex("purple", ROLE_INFO[U.role].label) .. "\n"
+      .. ROLE_INFO[U.role].desc .. "\n\n" .. W.hex("comment", "Click a role to continue. You can change it later with /sw role."))
   end }
 end
 
@@ -110,37 +128,45 @@ local function pageWarlock(parent)
   p:SetAllPoints()
   text(p, "GameFontNormalLarge", "purple", 0, 0):SetText("Warlock setup")
 
-  text(p, "GameFontNormal", "cyan", 0, -34):SetText("Where do you summon to?")
-  local destOut = text(p, "GameFontHighlight", "fg", 190, -54)
-  local dest = editBox(p, 0, -50, 170, function(v)
+  text(p, "GameFontNormal", "cyan", 0, -30):SetText("1. Where do you summon to?")
+  local destOut = text(p, "GameFontHighlight", "fg", 190, -50, 240)
+  local dest = editBox(p, 0, -46, 170, function(v)
     local m = v ~= "" and W.destinations.match(v)
     W.db.dest = m and m.key or nil
     W.fire("CONFIG_CHANGED")
     U:refresh()
   end)
-  text(p, "GameFontNormal", "cyan", 0, -84):SetText("Price per summon")
-  local priceOut = text(p, "GameFontHighlight", "fg", 190, -104)
-  local price = editBox(p, 0, -100, 80, function(v)
-    local c = W.parseMoney(v)
+
+  text(p, "GameFontNormal", "cyan", 0, -76):SetText("2. Price per summon")
+  local priceOut = text(p, "GameFontHighlight", "fg", 190, -96, 240)
+  local price = editBox(p, 0, -92, 80, function(v)
+    local c = W.parseMoneyUser(v)
     if c then W.db.price = c; W.fire("CONFIG_CHANGED") end
-    priceOut:SetText(c and W.hex("green", W.fmtMoney(c)) or W.hex("orange", "use 80s, 1g or 1g50s"))
+    U:refresh()
+  end, function(v)
+    local c = W.parseMoneyUser(v)
+    priceOut:SetText(c and W.hex("green", W.fmtMoney(c)) or W.hex("orange", "use 1g, 80s, 1g50s, or just 1"))
   end)
-  local svc = checkBox(p, 0, -132, "Auto-reply and invite people who whisper you",
+
+  text(p, "GameFontNormal", "cyan", 0, -122):SetText("3. Bind your Summon Next key")
+  local keyOut = text(p, "GameFontHighlight", "fg", 0, -142, 430)
+
+  local svc = checkBox(p, 0, -170, "Auto-reply and invite people who whisper you",
     function() return W.db.service end, function(v) W.db.service = v end)
-  local plain = checkBox(p, 0, -158, "Plain messages (skip the \"sir\" flavor)",
+  local plain = checkBox(p, 0, -194, "Plain messages (skip the \"sir\" flavor)",
     function() return W.db.plainMode end, function(v) W.db.plainMode = v; U:refresh() end)
-  local sample = text(p, "GameFontHighlightSmall", "comment", 0, -192, 430)
+  local sample = text(p, "GameFontHighlightSmall", "comment", 0, -224, 430)
 
   return { frame = p, refresh = function()
-    if not dest:HasFocus() then
-      local cur = W.destinations.byKey(W.db.dest)
-      dest:SetText(cur and cur.name or "")
-    end
     local cur = W.destinations.byKey(W.db.dest)
+    if not dest:HasFocus() then dest:SetText(cur and cur.name or "") end
     destOut:SetText(cur and W.hex("green", "-> " .. cur.name)
-      or W.hex("comment", "blank = your current zone (" .. W.destName() .. ")"))
-    if not price:HasFocus() then price:SetText(W.fmtMoney(W.db.price)) end
-    if priceOut:GetText() == nil or priceOut:GetText() == "" then priceOut:SetText(W.hex("green", W.fmtMoney(W.db.price))) end
+      or W.hex("comment", "blank = wherever you stand (" .. W.destName() .. ")"))
+    if not price:HasFocus() then
+      price:SetText(W.fmtMoney(W.db.price))
+      priceOut:SetText(W.hex("green", W.fmtMoney(W.db.price)) .. W.hex("comment", " per summon"))
+    end
+    keyOut:SetText(bindingStatus(NEXT_BINDING, BIND_PATH_NEXT))
     svc.refresh(); plain.refresh()
     local saved = W.messages.last.queued
     sample:SetText("Customers will get: " .. W.hex("fg", W.messages:text("queued") or "(off)"))
@@ -153,21 +179,29 @@ local function pageClicker(parent)
   p:SetAllPoints()
   text(p, "GameFontNormalLarge", "purple", 0, 0):SetText("Clicker setup")
 
-  text(p, "GameFontNormal", "cyan", 0, -34):SetText("1. Let the Interact key reach the portal")
-  local cvarOut = text(p, "GameFontHighlight", "fg", 0, -56, 300)
+  text(p, "GameFontNormal", "cyan", 0, -30):SetText("1. Let the Interact key reach the portal")
+  local cvarOut = text(p, "GameFontHighlight", "fg", 0, -50, 300)
   local cvarBtn = button(p, "Turn it on", 110, function()
     pcall(C_CVar.SetCVar, "SoftTargetInteract", "3")
     U:refresh()
   end)
-  cvarBtn:SetPoint("TOPLEFT", 310, -52)
+  cvarBtn:SetPoint("TOPLEFT", 310, -46)
 
-  text(p, "GameFontNormal", "cyan", 0, -88):SetText("2. Bind \"Interact With Target\"")
-  local keyOut = text(p, "GameFontHighlight", "fg", 0, -110, 430)
+  text(p, "GameFontNormal", "cyan", 0, -76):SetText("2. Bind \"Interact With Target\"")
+  local keyOut = text(p, "GameFontHighlight", "fg", 0, -96, 430)
 
-  text(p, "GameFontNormal", "cyan", 0, -150):SetText("3. Check the alert")
+  text(p, "GameFontNormal", "cyan", 0, -130):SetText("3. Hear the alert while this window is in the background")
+  local sndOut = text(p, "GameFontHighlight", "fg", 0, -150, 300)
+  local sndBtn = button(p, "Turn it on", 110, function()
+    pcall(C_CVar.SetCVar, "Sound_EnableSoundWhenGameIsInactive", "1")
+    U:refresh()
+  end)
+  sndBtn:SetPoint("TOPLEFT", 310, -146)
+
+  text(p, "GameFontNormal", "cyan", 0, -176):SetText("4. Check the alert")
   local test = button(p, "Show the banner", 130, function() W.commands.testportal("") end)
-  test:SetPoint("TOPLEFT", 0, -170)
-  local snd = checkBox(p, 150, -169, "Play a sound", function() return W.db.alertSound end,
+  test:SetPoint("TOPLEFT", 0, -196)
+  local snd = checkBox(p, 150, -195, "Play a sound", function() return W.db.alertSound end,
     function(v) W.db.alertSound = v end)
 
   return { frame = p, refresh = function()
@@ -179,9 +213,15 @@ local function pageClicker(parent)
       cvarOut:SetText(W.hex("orange", "Off (it's " .. tostring(v) .. ", needs 3)"))
       cvarBtn:Show()
     end
-    local key = GetBindingKey("INTERACTTARGET")
-    keyOut:SetText(key and W.hex("green", "Bound to " .. key)
-      or W.hex("orange", "Not bound yet. Esc > Options > Keybindings > Targeting > Interact With Target. This page updates when you're done."))
+    keyOut:SetText(bindingStatus("INTERACTTARGET", BIND_PATH_INTERACT))
+    local s = C_CVar.GetCVar("Sound_EnableSoundWhenGameIsInactive")
+    if s == "1" then
+      sndOut:SetText(W.hex("green", "On: sound plays even when another window has focus"))
+      sndBtn:Hide()
+    else
+      sndOut:SetText(W.hex("orange", "Off: this window goes silent whenever you click elsewhere"))
+      sndBtn:Show()
+    end
     snd.refresh()
   end }
 end
@@ -191,28 +231,63 @@ local function pageAdvertiser(parent)
   p:SetAllPoints()
   text(p, "GameFontNormalLarge", "purple", 0, 0):SetText("Advertiser setup")
 
-  text(p, "GameFontNormal", "cyan", 0, -34):SetText("Ad channels (numbers or names)")
-  local chanOut = text(p, "GameFontHighlight", "fg", 190, -54, 240)
-  local chan = editBox(p, 0, -50, 170, function(v)
+  text(p, "GameFontNormal", "cyan", 0, -30):SetText("1. Ad channels (numbers or names)")
+  local chanOut = text(p, "GameFontHighlight", "fg", 190, -50, 240)
+  local chan = editBox(p, 0, -46, 170, function(v)
     if v ~= "" then W.db.adChannels = v; W.fire("CONFIG_CHANGED") end
     U:refresh()
   end)
-  text(p, "GameFontNormal", "cyan", 0, -84):SetText("Main warlock's name")
-  local lockOut = text(p, "GameFontHighlight", "comment", 190, -104, 240)
-  local lock = editBox(p, 0, -100, 170, function(v)
+  -- one Join button per channel you listed by name but have not joined
+  local joins = {}
+  for i = 1, 4 do
+    local b = button(p, "Join", 110, nil)
+    b:SetPoint("TOPLEFT", 0, -72 - (i - 1) * 24)
+    b:Hide()
+    joins[i] = b
+  end
+  local joinHint = text(p, "GameFontHighlightSmall", "comment", 118, -78, 300)
+
+  text(p, "GameFontNormal", "cyan", 0, -176):SetText("2. Main warlock's name")
+  local lockOut = text(p, "GameFontHighlight", "comment", 190, -196, 240)
+  local lock = editBox(p, 0, -192, 170, function(v)
     W.db.lockName = v ~= "" and v or nil
     W.fire("CONFIG_CHANGED")
     U:refresh()
   end)
-  local preview = text(p, "GameFontHighlightSmall", "comment", 0, -140, 430)
+  local preview = text(p, "GameFontHighlightSmall", "comment", 0, -224, 430)
 
   return { frame = p, refresh = function()
     if not chan:HasFocus() then chan:SetText(W.db.adChannels or "") end
     if not lock:HasFocus() then lock:SetText(W.db.lockName or "") end
     chanOut:SetText(W.ads:channelSummary())
+    local n, numbered = 0, false
+    for _, c in ipairs(W.ads:channels()) do
+      if not c.id then
+        if type(c.want) == "string" and n < #joins then
+          n = n + 1
+          local b = joins[n]
+          b:SetText("Join " .. c.want)
+          b:SetScript("OnClick", function()
+            pcall(JoinChannelByName, c.want)
+            C_Timer.After(1, function() U:refresh() end)
+          end)
+          b:Show()
+        else
+          numbered = true
+        end
+      end
+    end
+    for i = n + 1, #joins do joins[i]:Hide() end
+    if numbered then
+      joinHint:SetText("Channel numbers come from your own chat setup; a number you haven't joined can only be joined by name (General, Trade, Services).")
+    elseif n > 0 then
+      joinHint:SetText("Not joined yet. Click to join; the list above goes green when it worked.")
+    else
+      joinHint:SetText("")
+    end
     local age = W.db.remoteAt and (W.now() - W.db.remoteAt)
     lockOut:SetText((age and age < 120) and W.hex("green", "synced: " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
-      or "syncs by itself when you group with them")
+      or W.hex("orange", "Group with the warlock to sync their destination and price. Ungrouped, type their name and it syncs by whisper."))
     preview:SetText("Your ad: " .. W.hex("fg", W.ads:text()) .. "\n\n"
       .. W.hex("comment", "The ad follows the main warlock's destination and price. The Post ad button appears after setup: one click posts once to each channel. With assist in the warlock's raid you invite and queue \"inv\" whispers yourself."))
   end }
@@ -227,16 +302,19 @@ local function pageDone(parent)
   return { frame = p, refresh = function()
     local lines = { "Role: " .. W.hex("purple", ROLE_INFO[U.role].label) }
     if U.role == "warlock" then
-      table.insert(lines, "Summoning to " .. W.destName() .. " for " .. W.fmtMoney(W.priceFor(W.db.dest)) .. ".")
-      table.insert(lines, "Press your Summon Next key (Key Bindings > AddOns) or the portal button.")
+      table.insert(lines, "Summoning to " .. W.destName() .. " for " .. W.fmtMoney(W.priceFor(W.destKey())) .. ".")
+      local key = GetBindingKey(NEXT_BINDING)
+      table.insert(lines, "Summon the next person with " .. (key and (W.hex("yellow", key) .. ", ") or "your Summon Next key, ")
+        .. "the Next button on the summon window, or the big Summon Next button.")
       table.insert(lines, "Right-click a name in the queue to move, remove, block or whisper them.")
       table.insert(lines, W.hex("cyan", "/sw") .. " opens the ledger.")
     elseif U.role == "clicker" then
       table.insert(lines, "When the banner says PORTAL UP, press your Interact key.")
     else
-      table.insert(lines, "Click Post ad for each ad. It counts down between posts.")
+      table.insert(lines, "Click Post ad for each ad round. The button counts down until the next one.")
     end
-    table.insert(lines, W.hex("cyan", "/sw options") .. " has every setting. " .. W.hex("cyan", "/sw setup") .. " runs this again.")
+    table.insert(lines, W.hex("cyan", "/sw options") .. " has every setting, " .. W.hex("cyan", "/sw help") .. " lists the commands, "
+      .. W.hex("cyan", "/sw setup") .. " runs this again.")
     b:SetText(table.concat(lines, "\n"))
   end }
 end
@@ -246,12 +324,12 @@ end
 function U:currentPages()
   local rolePage = (U.role == "clicker" and self.pages.clicker)
     or (U.role == "advertiser" and self.pages.advertiser) or self.pages.warlock
-  return { self.pages.welcome, self.pages.role, rolePage, self.pages.done }
+  return { self.pages.role, rolePage, self.pages.done }
 end
 
 function U:build()
   if self.frame then return self.frame end
-  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 380, "SummonSir setup") -- no portrait: it covered the step text
+  local f = W.stockWindow("SummonSirSetup", UIParent, 500, 400, "SummonSir setup") -- no portrait: it covered the step text
   f:SetPoint("CENTER")
   f:SetFrameStrata("DIALOG")
   table.insert(UISpecialFrames, "SummonSirSetup")
@@ -267,7 +345,6 @@ function U:build()
   local content = CreateFrame("Frame", nil, f)
   content:SetPoint("TOPLEFT", 28, -64)
   content:SetPoint("BOTTOMRIGHT", -28, 60)
-  self.pages.welcome = pageWelcome(content)
   self.pages.role = pageRole(content)
   self.pages.warlock = pageWarlock(content)
   self.pages.clicker = pageClicker(content)
@@ -283,15 +360,16 @@ function U:build()
   f.skip = button(f, "Skip setup", 100, function() U:finish() end)
   f.skip:SetPoint("BOTTOM", 0, 12)
 
-  -- closing early counts as done: /sw setup brings it back
-  f:SetScript("OnHide", function() charState().setupDone = true end)
-  -- live status (keybind, channel join) while open
+  f:Hide()
+  -- closing early (Escape, the X) counts as done: /sw setup brings it back.
+  -- Installed after the build-time Hide so building the frame never marks it done.
+  f:SetScript("OnHide", function() if U.opened then charState().setupDone = true end end)
+  -- live status (keybinds, cvars, channel joins) while open
   local acc = 0
   f:SetScript("OnUpdate", function(_, elapsed)
     acc = acc + elapsed
     if acc > 0.5 then acc = 0; U:refresh() end
   end)
-  f:Hide()
   self.frame = f
   return f
 end
@@ -320,6 +398,7 @@ function U:open()
   self:build()
   self.role = W.role()
   self.page = 1
+  self.opened = true
   self.frame:Show()
   self:refresh()
 end
@@ -327,15 +406,18 @@ end
 function U:finish()
   charState().setupDone = true
   if self.frame then self.frame:Hide() end
+  self.opened = false
   W.fire("ROLE_CHANGED", W.role())
-  W.print("setup done. /sw options for every setting, /sw setup to run it again.")
+  W.print("setup done. /sw options for every setting, /sw help for the commands, /sw setup to run this again.")
 end
 
 W.module("setup", U)
 
 function U:init()
   W.command("setup", "setup: run the one-time setup again", function() U:open() end)
-  W.on("WARLOCK_READY", function()
+  -- PLAYER_LOGIN, not ADDON_LOADED: by then the character's full two-word
+  -- name is known, so the per-character flag lands under the right key
+  W.on("PLAYER_LOGIN", function()
     if U:needed() then
       C_Timer.After(4, function()
         if U:needed() and not InCombatLockdown() then U:open() end
