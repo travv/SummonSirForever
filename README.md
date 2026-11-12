@@ -6,7 +6,7 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w7). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w8). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).

@@ -222,7 +222,7 @@ settings = {
     end
     local function norm(s)
       s = string.lower(s)
-      s = string.gsub(s, "^%s*%[[^%]]*%]", "") -- "[SummonSir] 123" from another addon user
+      s = string.gsub(s, "^%s*%[[^%]]*%]", "") -- tagged phrases ("[SteaSummon] 123") from other SteaSummon users
       s = string.gsub(s, "^[%s%p]+", "")
       s = string.gsub(s, "[%s%p]+$", "")
       return s

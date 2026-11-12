@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-w8 (2026-11-11): no addon tag on messages
+
+- Messages no longer start with `[SummonSir]`. Whispers, raid/say notices and nags go out exactly as written.
+- Tagged phrases from other SteaSummon users ("[SteaSummon] 123") are still recognized as summon requests.
+
 ## 1.0.0-w7 (2026-11-11): removal fixes, big Summon Next button
 
 ### Fixes
@@ -41,7 +46,7 @@ Covers what The Lazy Summoner does, as our own code.
   - ad: "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!"
 - Covers the raid, say and whisper notices, the raid info and clicker nags, the alt whispers, the AFK reply, our three customer replies and the ad.
 - Saved messages still on the old stock wording are upgraded at login. Anything you wrote yourself is kept.
-- Outgoing chat is tagged `[SummonSir]` instead of `[SteaSummon]`. Summon phrases with either tag are still recognized.
+- Outgoing chat is tagged `[SummonSir]` instead of `[SteaSummon]` (tag removed in w8). Summon phrases with either tag are still recognized.
 
 ## 1.0.0-w4 (2026-11-11): settings fix
 

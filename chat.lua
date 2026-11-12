@@ -225,8 +225,7 @@ local chat = {
                         ["%%z"] = z,
                         ["%%t"] = trigphrase
       }
-      msg = tstring(msg, patterns)
-      msg = "[SummonSir] " .. msg
+      msg = tstring(msg, patterns) -- sent as typed: no addon tag in front
       -- argument 3 is the language id: classic clients tolerated a channel
       -- name there, modern clients validate the number. nil = default
       -- language; the target only applies to whispers
