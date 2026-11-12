@@ -43,6 +43,9 @@ W.DEFAULTS = {
   dest = nil,             -- destination key used in ads and replies
   lockName = nil,         -- warlock name, for advertiser ads (synced when grouped)
   service = true,         -- warlock: auto-reply + auto-invite people who whisper a request
+  maxQueue = 30,          -- queue cap for new customers (0 = no cap); a raid holds 40
+  plainMode = false,      -- short serious messages instead of the SummonSir lines
+  msg = {},               -- message type -> { mode, line, custom } (messages.lua)
   graceMinutes = 10,      -- unpaid this long after arriving = never paid
   autoBlock = true,       -- block never-paid customers automatically
   autoBlockHours = 24,
@@ -120,6 +123,25 @@ function W.fill(template, vars)
     if v == nil then return "{" .. key .. "}" end
     return tostring(v)
   end))
+end
+
+-- Forever lists only C_ChatInfo.SendChatMessage (a shim covers the bare name too)
+local SendChatMessage = (C_ChatInfo and C_ChatInfo.SendChatMessage) or SendChatMessage
+
+-- a whisper to someone who contacted us first (never a cold whisper)
+function W.whisper(player, msg)
+  if player and msg and msg ~= "" then SendChatMessage(msg, "WHISPER", nil, player) end
+end
+
+-- soul shards in all bags (the reagent-slot soul bag included)
+function W.countShards()
+  local n = 0
+  for bag = 0, (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4) do
+    for slot = 1, (C_Container.GetContainerNumSlots(bag) or 0) do
+      if C_Container.GetContainerItemID(bag, slot) == 6265 then n = n + 1 end
+    end
+  end
+  return n
 end
 
 function W.print(...)
@@ -331,6 +353,12 @@ function W.onChat(event, msg, player)
     return false
   end
   return handled and true or false
+end
+
+-- summon.lua addWaiting (runs on the queue leader only): someone joined the queue
+function W.queueAdded(player)
+  if not W.loaded or not player then return end
+  W.fire("QUEUE_ADDED", W.shortName(player))
 end
 
 -- gossip.lua add (leader side): false = refuse this player

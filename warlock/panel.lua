@@ -96,8 +96,8 @@ function UI:bodyText(now)
 
   add(dim("role ") .. W.role() .. dim("   to ") .. W.destName() .. dim("   price ") .. gold(W.priceFor(db.dest)))
 
-  local shards = addonData.summon and addonData.summon.shards
-  if W.role() == "warlock" and shards then
+  if W.role() == "warlock" then
+    local shards = W.countShards()
     add(dim("soul shards ") .. W.hex(shards < 10 and "red" or "fg", tostring(shards)))
   end
   add("")

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0-w6 (2026-11-11): Lazy Summoner parity, first-run setup
+
+Covers what The Lazy Summoner does, as our own code.
+- **One-time setup panel** on each character's first login (role, then role-specific setup). `/sw setup` runs it again.
+- **Place in line:** sent when someone joins the queue, and again when they ask.
+- **Queue cap** (default 30, `/sw cap`), with a "queue is full" reply.
+- **Already here:** a reply for people standing at the destination, instead of queueing them.
+- **Summon complete:** a payment reminder when an unpaid customer arrives.
+- **Out of soul shards:** an alert and sound for you, plus a one-time whisper to the next in line. Shards are now counted straight from your bags.
+- **Messages:**
+  - 8 types with 5 SummonSir lines each.
+  - Each can be random, a fixed line, custom text, or off.
+  - Plain mode (`/sw plain`).
+  - All of it is on the settings page.
+  - Edited texts from earlier versions carry over as custom text.
+- **Right-click menu on queue names:**
+  - move to front or back (queue leader only; it syncs to every warlock)
+  - mark summoned, remove, block
+  - whisper any message
+
 ## 1.0.0-w5 (2026-11-11): SummonSir house style
 
 - New default messages, with "sir" and exclamation points. For example:

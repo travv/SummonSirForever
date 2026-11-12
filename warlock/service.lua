@@ -1,6 +1,7 @@
--- The sales loop on whispers: blocklist gate, auto-reply, invite, queue on join,
--- wrong-destination reply, advertiser redirect, and the pending watchdog.
--- Only people who whispered first get a whisper back. No cold whispers.
+-- The sales loop on whispers: blocklist gate, first reply + invite, queue on
+-- join, place in line, queue cap, already-here, wrong destination, advertiser
+-- redirect, out-of-shards warning, summon-complete reminder, pending watchdog.
+-- Only people who whispered (or asked in group chat) get a whisper back.
 -- Copyright (c) 2026 travv. MIT licensed.
 
 local _, addonData = ...
@@ -8,32 +9,23 @@ local W = addonData.W
 
 local InviteUnit = (C_PartyInfo and C_PartyInfo.InviteUnit) or InviteUnit
 local ConvertToRaid = (C_PartyInfo and C_PartyInfo.ConvertToRaid) or ConvertToRaid
--- Forever lists only C_ChatInfo.SendChatMessage (same arguments)
-local SendChatMessage = (C_ChatInfo and C_ChatInfo.SendChatMessage) or SendChatMessage
 
 local V = {
   pendingJoin = {},  -- name -> time invited
-  replied = {},      -- name..kind -> time of last auto-reply
   pendingSince = {}, -- name -> GetTime() a row went "pending"
+  shardWarned = {},  -- name -> true once told we're out of shards
+  outOfShards = false,
   JOIN_WINDOW = 180,
   REPLY_EVERY = 600,
+  POSITION_EVERY = 45,
   SERVED_WINDOW = 15 * 60,
   PENDING_TIMEOUT = 15,
 }
 
+local function M() return W.messages end
+
 function V:inGroup(name)
   return (UnitInParty(name) or UnitInRaid(name)) and true or false
-end
-
--- whisper back at most once per REPLY_EVERY per kind of reply
-function V:replyOnce(player, kind, template, extra, now)
-  now = now or W.now()
-  local key = player .. "|" .. kind
-  if self.replied[key] and now - self.replied[key] < self.REPLY_EVERY then return false end
-  self.replied[key] = now
-  local msg = W.fill(template, W.vars(extra))
-  if msg ~= "" then SendChatMessage(msg, "WHISPER", nil, player) end
-  return true
 end
 
 function V:isInviteWord(msg)
@@ -58,6 +50,31 @@ function V:recentlyServed(player, now)
   return W.ledger:findSummon(player, now, self.SERVED_WINDOW, function(s) return s.arrived end) ~= nil
 end
 
+-- queue position from the shared list: 1 = next
+function V:position(player)
+  local S = addonData.summon
+  local idx = S and S:findWaitingPlayerIdx(player)
+  return idx
+end
+
+function V:sendPosition(player, every)
+  local pos = self:position(player)
+  if not pos then return false end
+  return M():send(player, "position", { pos = pos, ahead = pos - 1 }, every or self.POSITION_EVERY)
+end
+
+-- waiting + invited-but-not-joined, against the cap
+function V:queueFull()
+  local cap = W.db.maxQueue or 0
+  if cap <= 0 then return false end
+  local n = addonData.summon and addonData.summon.numwaiting or 0
+  local now = W.now()
+  for _, t in pairs(self.pendingJoin) do
+    if now - t <= self.JOIN_WINDOW then n = n + 1 end
+  end
+  return n >= cap
+end
+
 function V:invite(player)
   self.pendingJoin[player] = W.now()
   if not IsInRaid() and GetNumGroupMembers() >= 5 and UnitIsGroupLeader("player") then
@@ -66,6 +83,11 @@ function V:invite(player)
   else
     InviteUnit(player)
   end
+end
+
+function V:isNearby(player)
+  local util = addonData.util
+  return util and util.playerClose and util:playerClose(player) and true or false
 end
 
 -- true = handled, upstream chat.lua stops
@@ -82,13 +104,13 @@ function V:onChat(event, msg, player)
   if not isReq then return false end
 
   if role == "advertiser" then
-    self:replyOnce(player, "adv", W.db.advertiserReplyText)
+    M():send(player, "advertiser", nil, self.REPLY_EVERY)
     return true
   end
   if role ~= "warlock" or not W.db.service then return false end
 
   if asked and W.db.dest and asked.key ~= W.db.dest then
-    self:replyOnce(player, "wrong", W.db.wrongDestText, { asked = asked.name })
+    M():send(player, "wrongdest", { asked = asked.name }, self.REPLY_EVERY)
     return true
   end
 
@@ -97,6 +119,18 @@ function V:onChat(event, msg, player)
   end
 
   if self:inGroup(player) then
+    if self:position(player) then
+      self:sendPosition(player) -- asking again: tell them where they stand
+      return false -- upstream resets a failed summon back to "requested"
+    end
+    if self:isNearby(player) then
+      M():send(player, "nearby", nil, self.REPLY_EVERY)
+      return true
+    end
+    if self:queueFull() then
+      M():send(player, "full", nil, 120)
+      return true
+    end
     if addonData.settings:findSummonWord(msg) then
       return false -- an exact phrase: upstream queues it as before
     end
@@ -106,7 +140,15 @@ function V:onChat(event, msg, player)
 
   if addonData.summon.afk then return false end -- upstream sends the AFK reply
 
-  self:replyOnce(player, "price", W.db.replyText)
+  if self.pendingJoin[player] then
+    return true -- already invited, the reply went out
+  end
+  if self:queueFull() then
+    M():send(player, "full", nil, 120)
+    return true
+  end
+
+  M():send(player, "queued", nil, self.REPLY_EVERY)
   self:invite(player)
   return true
 end
@@ -147,12 +189,59 @@ function V:watchdog()
   end
 end
 
+-- out of shards: tell the warlock once, and the next person in line once
+function V:shardCheck(count)
+  local summon = addonData.summon
+  if count > 0 then
+    if self.outOfShards then W.print(W.hex("green", "soul shards restocked:"), count) end
+    self.outOfShards = false
+    wipe(self.shardWarned)
+    return
+  end
+  if not self.outOfShards then
+    self.outOfShards = true
+    W.print(W.hex("red", "out of soul shards!"))
+    pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959, "Master")
+  end
+  local nextRec = summon and summon.firstRequested and summon:firstRequested()
+  local name = nextRec and nextRec[1]
+  if name and not self.shardWarned[name] then
+    self.shardWarned[name] = true
+    M():send(name, "noshards", nil, 300)
+  end
+end
+
+-- arrived and not yet paid: the summon-complete line doubles as the payment reminder
+function V:onArrived(name, now)
+  now = now or W.now()
+  local s = W.ledger:findSummon(name, now, 600, function(r) return r.arrived and not r.completeSent end)
+  if not s then return false end
+  s.completeSent = true
+  if s.paid then return false end
+  return M():send(name, "complete", { price = W.fmtMoney(s.price or W.priceFor(s.dest)) }, 0, now)
+end
+
 W.module("service", V)
 
 function V:init()
   W.on("GROUP_ROSTER_UPDATE", function()
     C_Timer.After(1, function() V:checkJoins() end) -- unit info lags the roster event
   end)
+  W.on("QUEUE_ADDED", function(name)
+    if W.role() == "warlock" then
+      C_Timer.After(0.5, function() V:sendPosition(name, 0) end)
+    end
+  end)
+  W.on("SUMMON_ARRIVED", function(name)
+    if W.role() == "warlock" then V:onArrived(name) end
+  end)
+  local function shards()
+    if W.role() == "warlock" and addonData.summon and addonData.summon.isWarlock then
+      V:shardCheck(W.countShards())
+    end
+  end
+  W.on("BAG_UPDATE_DELAYED", shards)
+  W.on("QUEUE_ADDED", function() C_Timer.After(1, shards) end)
   C_Timer.NewTicker(1, function()
     if W.role() == "warlock" then V:watchdog() end
   end)
@@ -190,9 +279,11 @@ function V:init()
     W.print("service replies:", W.db.service and "on" or "off")
   end)
 
-  W.command("reply", "reply <text>: the whisper new customers get", function(args)
-    if args ~= "" then W.db.replyText = args end
-    W.print("reply:", W.fill(W.db.replyText, W.vars()))
+  W.command("cap", "cap <n>: queue cap for new customers (0 = none)", function(args)
+    local n = tonumber(args)
+    if n then W.db.maxQueue = math.max(0, math.floor(n)) end
+    W.print("queue cap:", W.db.maxQueue == 0 and "none" or W.db.maxQueue)
+    W.fire("CONFIG_CHANGED")
   end)
 end
 

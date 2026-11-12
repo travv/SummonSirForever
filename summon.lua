@@ -547,6 +547,7 @@ local summon = {
 
     db("summon.waitlist", player .. " added to waiting list")
     self:showSummons()
+    if addonData.W then addonData.W.queueAdded(player) end
   end,
 
   ---------------------------------

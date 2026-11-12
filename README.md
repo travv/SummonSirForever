@@ -6,13 +6,21 @@ A warlock summon-service addon for WoW: Forever, forked from [SteaSummonForever]
 
 SummonSirForever turns SteaSummonForever into a tool for running a **warlock summoning service**, with one warlock, a couple of clickers and an advertiser. Everything new lives in `warlock/` and is controlled with `/sw` in game. All the original features below still work.
 
-> Not tested in game yet (v1.0.0-w5). Turn on `/console scriptErrors 1` and open an issue with any error text.
+> Not tested in game yet (v1.0.0-w6). Turn on `/console scriptErrors 1` and open an issue with any error text.
 
 ### Install (3 min)
 1. Download the zip from the [latest release](https://github.com/travv/SummonSirForever/releases/latest).
 2. Extract it into `_forever_\Interface\AddOns\`. You should end up with `AddOns\SummonSirForever\SummonSirForever.toc`.
 3. Fully restart WoW. A `/reload` is not enough for a new addon.
 4. Had SteaSummonForever installed? Delete that folder. The two can't run side by side.
+
+### First run
+A one-time **setup panel** opens on each character's first login. It asks you to pick a role, then walks you through that role:
+- **Warlock:** destination, price, auto-reply, and plain or "sir" messages.
+- **Clicker:** one click turns on soft interact, then it checks your Interact key binding and shows a test banner.
+- **Advertiser:** ad channel and warlock name, with a preview of the ad.
+
+Run it again any time with `/sw setup`.
 
 ### Roles
 Each window gets one role. Set it with `/sw role <role>`.
@@ -48,9 +56,25 @@ Each window gets one role. Set it with `/sw role <role>`.
 
 **Whisper flow (warlock role)**
 - Anyone who whispers a request gets your price once, plus an invite.
-- They're added to the queue as soon as they join.
+- They're added to the queue as soon as they join, and get their **place in line**. Asking again tells them where they stand.
+- **Queue cap** (default 30): past it, new customers get a polite "queue is full".
+- People **already standing at the destination** get told so instead of being queued.
 - A full party turns into a raid automatically.
 - "Thanks for the summon" is never treated as a new order.
+- **Summon complete:** when they arrive unpaid, they get a friendly payment reminder.
+- **Out of soul shards:** you get an alert and a sound, and the next person in line gets a one-time "hang tight" whisper.
+
+**Messages**
+- 8 message types: first reply, place in line, queue full, already here, wrong destination, summon complete, out of shards, advertiser reply.
+- Each has 5 lines in the SummonSir voice.
+- Each type can be set to a random line, a fixed line, your own custom text, or off.
+- **Plain mode** swaps them all for short, serious lines.
+
+**Right-click a name in the queue**
+- Move them to the front or back.
+- Mark them summoned or remove them.
+- Block them and remove them.
+- Whisper them any message.
 
 **Stable queue rows**
 - Rows don't shift while your mouse is over the list, so you don't click the wrong person.
@@ -100,7 +124,10 @@ Every setting below is also on a **Summon service** page in **Settings > AddOns 
 | `/sw paid <name> [amount]` | Mark a summon paid by hand |
 | `/sw today` | Today's summons and gold by hour |
 | `/sw service on\|off` | Turn the warlock's auto-reply and invites on or off |
-| `/sw reply <text>` | The first whisper customers get (`{dest}`, `{price}`) |
+| `/sw cap <n>` | Queue cap for new customers (0 = none) |
+| `/sw plain on\|off` | Plain messages instead of the SummonSir lines |
+| `/sw say <type>` | Print a sample message of one type |
+| `/sw setup` | Run the first-time setup again |
 | `/sw adtext <template>` / `channel <name>` / `lock <name>` | Ad text, ad channel, warlock name in ads |
 | `/sw testportal` | Preview the clicker banner |
 

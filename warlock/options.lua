@@ -43,6 +43,67 @@ local function placeholders(list)
   return W.hex("comment", "Filled in for you: " .. list)
 end
 
+-- one block per message type: mode dropdown, custom text, live sample
+function O:messagesGroup(order)
+  local M = W.messages
+  local args = {
+    plain = {
+      order = 0, type = "toggle", name = "Plain mode", width = "full",
+      desc = "Short, serious messages instead of the SummonSir lines, for when you're in a hurry. Custom texts still win.",
+      get = function() return db().plainMode end,
+      set = function(_, v) db().plainMode = v; changed() end,
+    },
+    help = {
+      order = 1, type = "description",
+      name = placeholders("{dest} {price} {lock} {asked} {pos} {ahead}. Random picks a different line each time. Each person gets each message at most once every few minutes."),
+    },
+  }
+  for i, kind in ipairs(M.ORDER) do
+    local t = M.TYPES[kind]
+    local modes, sorting = { random = "Random line" }, { "random" }
+    for n = 1, #t.lines do
+      modes["fixed" .. n] = "Line " .. n .. ": " .. string.sub(t.lines[n], 1, 40) .. "..."
+      table.insert(sorting, "fixed" .. n)
+    end
+    modes.custom, modes.off = "Custom text", "Off"
+    table.insert(sorting, "custom"); table.insert(sorting, "off")
+    local base = i * 10
+    args[kind .. "Mode"] = {
+      order = base, type = "select", name = t.label, width = "double",
+      values = modes, sorting = sorting,
+      get = function()
+        local st = M:setting(kind)
+        if st.mode == "fixed" then return "fixed" .. (st.line or 1) end
+        return st.mode
+      end,
+      set = function(_, v)
+        local st = M:setting(kind)
+        local n = string.match(v, "^fixed(%d+)$")
+        if n then st.mode, st.line = "fixed", tonumber(n) else st.mode = v end
+        changed()
+      end,
+    }
+    args[kind .. "Custom"] = {
+      order = base + 1, type = "input", name = "Custom text", width = "full",
+      hidden = function() return M:setting(kind).mode ~= "custom" end,
+      get = function() return M:setting(kind).custom or "" end,
+      set = function(_, v) M:setting(kind).custom = v; changed() end,
+    }
+    args[kind .. "Sample"] = {
+      order = base + 2, type = "description",
+      name = function()
+        local st = M:setting(kind)
+        if st.mode == "off" then return W.hex("comment", "(off)") end
+        local saved = M.last[kind]
+        local txt = M:text(kind, { pos = 3, ahead = 2, asked = "Orgrimmar" })
+        M.last[kind] = saved
+        return W.hex("comment", "e.g. ") .. (txt or "")
+      end,
+    }
+  end
+  return { order = order, type = "group", inline = true, name = "Messages", args = args }
+end
+
 function O:build()
   local dv, dorder = destValues()
   return {
@@ -52,6 +113,11 @@ function O:build()
       intro = {
         order = 0, type = "description", fontSize = "medium",
         name = "Settings for running a summon service. The same settings are also slash commands: type /sw in chat for the list.",
+      },
+      rerunSetup = {
+        order = 1, type = "execute", name = "Run setup again",
+        desc = "The one-time setup walkthrough (/sw setup).",
+        func = function() W.setup:open() end,
       },
 
       ---------------------------------------------------------------- role
@@ -132,35 +198,24 @@ function O:build()
 
       ---------------------------------------------------------------- whispers
       whisperGroup = {
-        order = 30, type = "group", inline = true, name = "Customer whispers",
+        order = 30, type = "group", inline = true, name = "Customers",
         args = {
           service = {
             order = 1, type = "toggle", name = "Auto-reply and invite", width = "full",
-            desc = "Warlock role: anyone who whispers a request gets the reply below once and an invite. They join the queue as soon as they're in the group.",
+            desc = "Warlock role: anyone who whispers a request gets the first reply and an invite, and joins the queue once they're in the group.",
             get = function() return db().service end,
             set = function(_, v) db().service = v; changed() end,
           },
-          replyText = {
-            order = 2, type = "input", name = "Reply to new customers", width = "full",
-            get = function() return db().replyText end,
-            set = function(_, v) db().replyText = v; changed() end,
-          },
-          wrongDestText = {
-            order = 3, type = "input", name = "Reply when they ask for a different place", width = "full",
-            get = function() return db().wrongDestText end,
-            set = function(_, v) db().wrongDestText = v; changed() end,
-          },
-          advertiserReplyText = {
-            order = 4, type = "input", name = "Advertiser's reply (points them at the warlock)", width = "full",
-            get = function() return db().advertiserReplyText end,
-            set = function(_, v) db().advertiserReplyText = v; changed() end,
-          },
-          whisperHelp = {
-            order = 5, type = "description",
-            name = placeholders("{dest} {price} {lock} {asked}. Each person gets each reply at most once every 10 minutes. Only people who whispered you get a reply."),
+          maxQueue = {
+            order = 2, type = "range", name = "Queue cap (0 = none)", min = 0, max = 39, step = 1,
+            desc = "New customers get the \"queue is full\" reply past this many waiting or invited. A raid holds 40.",
+            get = function() return db().maxQueue end,
+            set = function(_, v) db().maxQueue = v; changed() end,
           },
         },
       },
+
+      messagesGroup = O:messagesGroup(31),
 
       ---------------------------------------------------------------- payments + blocklist
       payGroup = {
