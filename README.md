@@ -1,4 +1,4 @@
-<p align="center"><img src="./img/social-preview.png" alt="SummonSirForever" width="880"/></p>
+<p align="center"><img src="./img/banner.png" alt="SummonSirForever" width="880"/></p>
 
 <p align="center">
   <a href="https://github.com/travv/SummonSirForever/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/travv/SummonSirForever?label=release&color=7a5cff"></a>
