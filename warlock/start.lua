@@ -1,0 +1,3 @@
+-- Loads last: every warlock module has registered its events by now
+local _, addonData = ...
+addonData.W.start()

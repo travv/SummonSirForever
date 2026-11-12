@@ -462,6 +462,9 @@ local gossip = {
 
   ---------------------------------
   add = function(self, player, isWhisper)
+    if addonData.W and not addonData.W.allowAdd(player) then
+      return -- blocklisted (checked leader side too: others forward adds here)
+    end
     if self:isLeader() then
       local index = addonData.summon:findWaitingPlayerIdx(player)
       if not index then

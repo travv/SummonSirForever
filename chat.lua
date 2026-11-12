@@ -8,6 +8,9 @@ local settings = addonData.settings
 local summon = addonData.summon
 local raid = addonData.raid
 
+-- API compat: Forever lists only C_ChatInfo.SendChatMessage (same arguments)
+local SendChatMessage = (C_ChatInfo and C_ChatInfo.SendChatMessage) or SendChatMessage
+
 local chat = {
   init = function(_)
     debug:registerCategory("chat")
@@ -15,6 +18,11 @@ local chat = {
 
   callback = function (_, event, msg, servername, ...)
     local me = addonData.util:playerFullName()
+
+    -- warlock service: blocklist, auto-reply + invite, loose phrases
+    if addonData.W and addonData.W.onChat(event, msg, servername) then
+      return
+    end
 
     -- don't want randos adding themselves
     local player, server = strsplit("-", servername)
@@ -42,7 +50,7 @@ local chat = {
         if cmd == L["list"] then
           local waitlist = summon:getWaiting()
           cprint(L["Summon waiting list"])
-          count = 0
+          local count = 0
 
           for _,waiting in pairs(waitlist) do
             local pats = {["%%name"] = waiting[1], ["%%number"] = waiting[2]}
@@ -81,12 +89,11 @@ local chat = {
 
     if msg then
       if string.sub(msg, 1,1) == "-" and settings:findSummonWord(string.sub(msg, 2)) then
-        name, server = strsplit("-", servername)
+        local name = strsplit("-", servername)
         gossip:arrived(name, true)
       elseif settings:findSummonWord(msg) then
         -- someone wants a summon
-        name, server = strsplit("-", servername)
-        db("chat","adding ", name, "to summon list")
+        db("chat","adding ", player, "to summon list")
 
         -- IsInGroup takes a category constant, not a player: classic clients
         -- ignored the bad argument (truthy), modern clients return false.
@@ -170,13 +177,22 @@ local chat = {
     end
 
     local msg = SteaSummonSave.adText
-    if msg == nil or msg == "" then
-      return
+    local chanId
+    if addonData.ads then
+      msg = addonData.ads:text()
+      chanId = addonData.ads:channel()
+      if not chanId then
+        cprint("Not in the " .. tostring(SteaWarlockDB.adChannel) .. " channel. Join it, or set another with /sw channel <name>.")
+        return
+      end
+    else
+      chanId = self:tradeChannel()
+      if not chanId then
+        cprint(L["No Trade channel found. Trade ads only work in cities."])
+        return
+      end
     end
-
-    local chanId = self:tradeChannel()
-    if not chanId then
-      cprint(L["No Trade channel found. Trade ads only work in cities."])
+    if msg == nil or msg == "" then
       return
     end
 

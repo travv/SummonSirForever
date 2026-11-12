@@ -179,9 +179,20 @@ settings = {
     SteaSummonSave.waiting = addonData.summon.waiting -- can get displaced if list is unmarshalled
   end,
 
+  -- case and surrounding spaces/punctuation no longer matter ("123!", "Summon Plz")
   findSummonWord = function(_, phrase)
+    if type(phrase) ~= "string" then
+      return nil
+    end
+    local function norm(s)
+      s = string.lower(s)
+      s = string.gsub(s, "^[%s%p]+", "")
+      s = string.gsub(s, "[%s%p]+$", "")
+      return s
+    end
+    local want = norm(phrase)
     for k,v in pairs(SteaSummonSave.summonWords) do
-      if v == phrase then
+      if v == phrase or norm(v) == want then
         return k
       end
     end

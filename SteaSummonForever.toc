@@ -2,11 +2,12 @@
 ## Title: SteaSummonForever
 ## Notes: One button warlock summoning with a shared, prioritized summon list for your whole raid.
 ## Author: Edualve
-## Version: 1.0.0
+## Version: 1.0.0-w1
 ## IconTexture: Interface/ICONS/Spell_Shadow_Twilight
 ## SavedVariablesPerCharacter: SteaSummonSave, SteaDEBUG, SteaSummonSaveLDB
+## SavedVariables: SteaWarlockDB
 ## X-Category: Chat & Communication
-## X-Website: https://github.com/edualve/SteaSummonForever
+## X-Website: https://github.com/travv/SteaSummonForever
 ## x-SteaSummon-Protocol-version: 0.64
 
 Libs\embeds.xml
@@ -26,3 +27,14 @@ alt.lua
 events.lua
 main.lua
 minimap.lua
+
+warlock\core.lua
+warlock\destinations.lua
+warlock\blocklist.lua
+warlock\ledger.lua
+warlock\stats.lua
+warlock\portal.lua
+warlock\ads.lua
+warlock\service.lua
+warlock\panel.lua
+warlock\start.lua

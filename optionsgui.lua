@@ -849,23 +849,18 @@ local raid = {
 }
 
 --- rummage for food and drink
+-- Forever only has the C_Container / C_Item versions of the bag APIs.
+-- Stays global: the (commented-out) bags option above calls it by name.
 function rummage()
-  out = ""
-  local icon, itemCount, locked, quality, readable, lootable,
-        isFiltered, noValue, itemID
-  local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
-        itemEquipLoc, itemIcon, itemSellPrice, itemClassID, itemSubClassID, bindType, expacID, itemSetID,
-        isCraftingReagent
-  for bag = 0, NUM_BAG_SLOTS do
-    for slot = 1, GetContainerNumSlots(bag) do
-      icon, itemCount, locked, quality, readable, lootable,
-        itemLink, isFiltered, noValue, itemID = GetContainerItemInfo(bag, slot)
+  local out = ""
+  for bag = 0, (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS) do
+    for slot = 1, C_Container.GetContainerNumSlots(bag) do
+      local itemID = C_Container.GetContainerItemID(bag, slot)
       if itemID then
-        itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
-        itemEquipLoc, itemIcon, itemSellPrice, itemClassID, itemSubClassID, bindType, expacID, itemSetID,
-        isCraftingReagent = GetItemInfo(itemID)
-        out = out .. itemName .. " " .. itemID .. " " ..  itemType .. " " .. itemSubType .. " " .. itemClassID
-            .. " " .. itemSubClassID .. " " .. itemIcon .. "\n"
+        local itemName, _, _, _, _, itemType, itemSubType, _, _, itemIcon, _, itemClassID, itemSubClassID =
+            C_Item.GetItemInfo(itemID)
+        out = out .. tostring(itemName) .. " " .. itemID .. " " .. tostring(itemType) .. " " .. tostring(itemSubType)
+            .. " " .. tostring(itemClassID) .. " " .. tostring(itemSubClassID) .. " " .. tostring(itemIcon) .. "\n"
       end
     end
   end

@@ -2,6 +2,8 @@
 
 # SteaSummonForever
 
+> **travv fork.** This copy adds a summon-service layer (payment ledger, stats, never-paid blocklist, destination matching, clicker portal alert, Services-channel ads) in `warlock/`. See CHANGELOG 1.0.0-w1 and `/sw` in game. Original credits below are unchanged.
+
 ***FAN UPDATE FOR WORLD OF WARCRAFT: FOREVER***
 
 WoW: Forever (Classic+) addon for warlock raid summoning

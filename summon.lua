@@ -413,7 +413,7 @@ local summon = {
   recRemoveIdx = function(self, idx)
     local ret = false
     if idx and type(idx) == "string" then
-      idx = tonumber(string)
+      idx = tonumber(idx)
     end
     if idx and idx <= self.numwaiting then
       self:listDirty(true)
@@ -446,7 +446,8 @@ local summon = {
         player = name
     end
     
-    if not IsInGroup(player) then
+    -- IsInGroup takes a category constant, not a player (same fix as chat.lua)
+    if not (UnitInParty(player) or UnitInRaid(player) or player == self.me) then
       return nil
     end
 
@@ -881,7 +882,7 @@ local summon = {
         end)
         f.adbutton:SetScript("OnEnter", function(this)
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-          GameTooltip:AddLine(L["Advertise in Trade"])
+          GameTooltip:AddLine("Advertise in " .. ((SteaWarlockDB and SteaWarlockDB.adChannel) or "Trade"))
           GameTooltip:Show()
         end)
         f.adbutton:SetScript("OnLeave", function()
@@ -941,26 +942,29 @@ local summon = {
     local next = false
     self.nextIdx = nil
     local listActive = false
+    self:layoutRows() -- stable rows: no reshuffle under the mouse
+    local nextRec = self:firstRequested() -- Next follows queue order, not row order
 
     for i=1, 37 do
+      local rec, recIdx = self:rowRecord(i)
       local player
       local summonClick
       local cancelClick
       local r,g,b,_ = 0.5, 0.5, 0.5
 
-      if self.waiting[i] ~= nil then
-        player = self:recPlayer(self.waiting[i])
+      if rec ~= nil then
+        player = self:recPlayer(rec)
         self:enableButton(i, true, player)
         addonData.buttons[i].Button:SetText(strsplit("-", player))
 
-        addonData.buttons[i].Priority["FS"]:SetText(self.buffLetter[self:recPrio(self.waiting[i])])
+        addonData.buttons[i].Priority["FS"]:SetText(self.buffLetter[self:recPrio(rec)])
 
         -- alts tooltip
-        if #self:recAlts(self.waiting[i]) > 0 then
+        if #self:recAlts(rec) > 0 then
           addonData.buttons[i].Status:SetScript("OnEnter", function(this)
             GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
             GameTooltip:AddLine(L["Alt Support"])
-            for _,v in pairs(self:recAlts(self.waiting[i])) do
+            for _,v in pairs(self:recAlts(rec)) do
               GameTooltip:AddLine(v)
             end
             GameTooltip:Show()
@@ -975,12 +979,12 @@ local summon = {
 
         if self:offline(player) or self:dead(player) then
           addonData.buttons[i].Button:SetEnabled(false)
-          if self:offline(player) and #self:recAlts(self.waiting[i]) > 0 then
+          if self:offline(player) and #self:recAlts(rec) > 0 then
             addonData.buttons[i].Status["FS"]:SetTextColor(0,0.5,0, 1)
           else
             addonData.buttons[i].Status["FS"]:SetTextColor(0.5,0.5,0.5, 1)
           end
-          if self:recAltWhispered(self.waiting[i]) ~= "x" then
+          if self:recAltWhispered(rec) ~= "x" then
             addonData.buttons[i].Status["FS"]:SetTextColor(0.5,1,0.5, 1)
           end
           addonData.buttons[i].Button:SetAttribute("macrotext", "")
@@ -998,20 +1002,20 @@ local summon = {
           -- I may have misread the error during raid, just adding extra caution detects
           if player and C_IncomingSummon and C_IncomingSummon.HasIncomingSummon then -- paranoia
             if C_IncomingSummon.HasIncomingSummon(player) then
-              local status = self:recStatus(self.waiting[i])
+              local status = self:recStatus(rec)
               if status ~= "summoned" and status ~= "accepted" and status ~= "declined" then
-                self:recStatus(self.waiting[i], "summoned")
+                self:recStatus(rec, "summoned")
               end
               if status ~= "accepted" and status ~= "declined" then
                 if C_IncomingSummon.IncomingSummonStatus then -- paranoia
                   local summonStatus = C_IncomingSummon.IncomingSummonStatus(player)
                   if summonStatus == 2 then
-                    self:recStatus(self.waiting[i], "accepted")
+                    self:recStatus(rec, "accepted")
                     -- accepting a summon teleports the player to the
                     -- destination: that is an arrival, remove them
                     addonData.gossip:arrived(player, false)
                   elseif summonStatus == 3 then
-                    self:recStatus(self.waiting[i], "declined")
+                    self:recStatus(rec, "declined")
                   end
                 end
               end
@@ -1064,30 +1068,29 @@ local summon = {
 
         addonData.buttons[i].Cancel:SetScript("OnMouseUp", cancelClick)
 
-        if self.waiting[i]  then
+        if rec then
           --- Next Button
-          if self:recStatus(self.waiting[i]) == "requested" then
-            if not next and (addonData.util:playerCanSummon()) then
+          if self:recStatus(rec) == "requested" then
+            if not next and rec == nextRec and (addonData.util:playerCanSummon()) then
               next = true
-              self.nextIdx = i
+              self.nextIdx = recIdx
               self:SetMacro(38, player)
-              addonData.buttons[38].Button:SetScript("OnMouseDown", summonClick)
+              addonData.buttons[38].Button:SetScript("PreClick", summonClick)
               addonData.buttons[38].Button:Show()
             end
             listActive = true
           elseif next and self.isCasting then
             addonData.buttons[38].Button:Show()
             local nextplayer = self:recPlayer(self.waiting[self.nextIdx])
-            print(nextplayer)
             self:SetMacro(38, nextplayer)
           end
 
           --- Time
           local noSecs = false
-          if tonumber(self:recTime(self.waiting[i])) > 59 then
+          if tonumber(self:recTime(rec)) > 59 then
             noSecs = true
           end
-          addonData.buttons[i].Time["FS"]:SetText(string.format(SecondsToTime(self:recTime(self.waiting[i]), noSecs)))
+          addonData.buttons[i].Time["FS"]:SetText(string.format(SecondsToTime(self:recTime(rec), noSecs)))
           local strwd = addonData.buttons[i].Time["FS"]:GetStringWidth()
           if strwd < 70 then
             addonData.buttons[i].Time["FS"]:SetWidth(80)
@@ -1097,12 +1100,12 @@ local summon = {
           end
 
           --- Status
-          addonData.buttons[i].Status["FS"]:SetText(L[self:recStatus(self.waiting[i])])
+          addonData.buttons[i].Status["FS"]:SetText(L[self:recStatus(rec)])
 
           --- New flare
-          if self:recNew(self.waiting[i]) then
+          if self:recNew(rec) then
             addonData.buttons[i].flare.ag:Play()
-            self:recNew(self.waiting[i],false)
+            self:recNew(rec,false)
           end
         end
 
@@ -1239,7 +1242,7 @@ local summon = {
         if hasSummonMana() then
           --self.isCasting = true
           local spell = GetSpellInfo(698) -- Ritual of Summoning
-          name, server = strsplit("-", player)
+          local name = strsplit("-", player)
           addonData.buttons[index].Button:SetAttribute("macrotext", "/stopmacro [channeling:"
               .. spell .. "]\n/target " .. name .. "\n/cast " .. spell .. "\n/cqs")
         else
@@ -1631,6 +1634,69 @@ local summon = {
   end,
 
   ---------------------------------
+  -- Stable rows: rowOrder maps a display row to a player name. While the
+  -- mouse is over the summon window rows keep their place (new names go to
+  -- the bottom, departed names leave a gap); when it leaves, the rows
+  -- compact back to queue order. Stops a click landing on the wrong person.
+  rowOrder = {},
+
+  layoutRows = function(self)
+    local frozen = SteaSummonFrame and SteaSummonFrame:IsShown() and SteaSummonFrame:IsMouseOver()
+    local changed = false
+    if not frozen then
+      local n = 0
+      for i, rec in ipairs(self.waiting) do
+        local name = self:recPlayer(rec)
+        if self.rowOrder[i] ~= name then changed = true end
+        self.rowOrder[i] = name
+        n = i
+      end
+      for i = #self.rowOrder, n + 1, -1 do
+        self.rowOrder[i] = nil
+        changed = true
+      end
+    else
+      local placed, last = {}, 0
+      for slot, name in pairs(self.rowOrder) do
+        placed[name] = slot
+        if slot > last then last = slot end
+      end
+      for _, rec in ipairs(self.waiting) do
+        local name = self:recPlayer(rec)
+        if not placed[name] and last < 37 then
+          last = last + 1
+          self.rowOrder[last] = name
+          placed[name] = last
+          changed = true
+        end
+      end
+    end
+    if changed then
+      self:listDirty(true)
+    end
+  end,
+
+  rowRecord = function(self, slot)
+    local name = self.rowOrder[slot]
+    if name then
+      local idx = self:findWaitingPlayerIdx(name)
+      if idx then
+        return self.waiting[idx], idx
+      end
+    end
+    return nil, nil
+  end,
+
+  firstRequested = function(self)
+    for _, rec in ipairs(self.waiting) do
+      if self:recStatus(rec) == "requested" then
+        return rec
+      end
+    end
+    return nil
+  end,
+
+  ---------------------------------
   findWaitingPlayer = function(self, player)
     local idx = self:findWaitingPlayerIdx(player)
     if idx then
@@ -1661,10 +1727,11 @@ local summon = {
 
   ---------------------------------
   arrived = function(self, player, cancel)
-    if cancel ~= null and not cancel then
+    if cancel ~= nil and not cancel then
       local rec = self:findWaitingPlayer(player)
       if rec then
         self.countSummoned = self.countSummoned + 1
+        if addonData.W then addonData.W.summonArrived(player) end
       end
     end
 
@@ -1683,6 +1750,7 @@ local summon = {
     db("summon.waitlist", "summon succeeded, setting status of " .. self.summoningPlayer .. " to summoned")
     addonData.gossip:status(self.summoningPlayer, "summoned")
     self.isCasting = false
+    if addonData.W then addonData.W.summonCast(self.summoningPlayer) end
   end,
 
   offline = function(self, player)
@@ -1724,7 +1792,7 @@ local summon = {
     local idx = self:findWaitingPlayerIdx(player)
     if idx then
       local state = ""
-      if dead and not self.waiting[idx][3] == "dead" then
+      if dead and self.waiting[idx][3] ~= "dead" then
         state = "dead"
         db("summon.waitlist", "setting status of", player, "to dead")
       elseif not dead and self.waiting[idx][3] == "dead" then
@@ -1997,12 +2065,14 @@ local summon = {
         event == "UNIT_SPELLCAST_START" then
       if spellId == 698 then
         self.isCasting = true
+        if addonData.W then addonData.W.portalUp(self.summoningPlayer) end
       end
     elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
       if self.isWarlock then
         local oldCount = self.shards
         self.shards = addonData.summon.shardCount(self)
         if spellId == 698 then -- "Ritual of Summoning"
+          if addonData.W then addonData.W.portalDown() end
           --- update shards (if shard count decreased then the summon went through!)
           if oldCount > g_self.shards then
             addonData.summon.summonSuccess(self)
@@ -2016,6 +2086,7 @@ local summon = {
       -- we can get this multiple times for "player" for the same cast, we only want to act once
       if spellId == 698 and self.lastCast ~= castUID then -- "Ritual of Summoning"
         self.lastCast = castUID
+        if addonData.W then addonData.W.portalDown() end
         addonData.summon.summonFail(self)
       end
     end
