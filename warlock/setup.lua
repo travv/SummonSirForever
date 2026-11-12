@@ -231,21 +231,10 @@ local function pageAdvertiser(parent)
   p:SetAllPoints()
   text(p, "GameFontNormalLarge", "purple", 0, 0):SetText("Advertiser setup")
 
-  text(p, "GameFontNormal", "cyan", 0, -30):SetText("1. Ad channels (numbers or names)")
-  local chanOut = text(p, "GameFontHighlight", "fg", 190, -50, 240)
-  local chan = editBox(p, 0, -46, 170, function(v)
-    if v ~= "" then W.db.adChannels = v; W.fire("CONFIG_CHANGED") end
-    U:refresh()
-  end)
-  -- one Join button per channel you listed by name but have not joined
-  local joins = {}
-  for i = 1, 4 do
-    local b = button(p, "Join", 110, nil)
-    b:SetPoint("TOPLEFT", 0, -72 - (i - 1) * 24)
-    b:Hide()
-    joins[i] = b
-  end
-  local joinHint = text(p, "GameFontHighlightSmall", "comment", 118, -78, 300)
+  text(p, "GameFontNormal", "cyan", 0, -30):SetText("1. Post the ad to these channels")
+  local picker = W.ads:buildPicker(p, 0, -50, 2, 215)
+  text(p, "GameFontHighlightSmall", "comment", 0, -146, 430):SetText(
+    "Only channels this character has joined are listed. Missing one? /join Services in chat and it shows up here.")
 
   text(p, "GameFontNormal", "cyan", 0, -176):SetText("2. Main warlock's name")
   local lockOut = text(p, "GameFontHighlight", "comment", 190, -196, 240)
@@ -257,39 +246,13 @@ local function pageAdvertiser(parent)
   local preview = text(p, "GameFontHighlightSmall", "comment", 0, -224, 430)
 
   return { frame = p, refresh = function()
-    if not chan:HasFocus() then chan:SetText(W.db.adChannels or "") end
+    picker.refresh()
     if not lock:HasFocus() then lock:SetText(W.db.lockName or "") end
-    chanOut:SetText(W.ads:channelSummary())
-    local n, numbered = 0, false
-    for _, c in ipairs(W.ads:channels()) do
-      if not c.id then
-        if type(c.want) == "string" and n < #joins then
-          n = n + 1
-          local b = joins[n]
-          b:SetText("Join " .. c.want)
-          b:SetScript("OnClick", function()
-            pcall(JoinChannelByName, c.want)
-            C_Timer.After(1, function() U:refresh() end)
-          end)
-          b:Show()
-        else
-          numbered = true
-        end
-      end
-    end
-    for i = n + 1, #joins do joins[i]:Hide() end
-    if numbered then
-      joinHint:SetText("Channel numbers come from your own chat setup; a number you haven't joined can only be joined by name (General, Trade, Services).")
-    elseif n > 0 then
-      joinHint:SetText("Not joined yet. Click to join; the list above goes green when it worked.")
-    else
-      joinHint:SetText("")
-    end
     local age = W.db.remoteAt and (W.now() - W.db.remoteAt)
     lockOut:SetText((age and age < 120) and W.hex("green", "synced: " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
       or W.hex("orange", "Group with the warlock to sync their destination and price. Ungrouped, type their name and it syncs by whisper."))
     preview:SetText("Your ad: " .. W.hex("fg", W.ads:text()) .. "\n\n"
-      .. W.hex("comment", "The ad follows the main warlock's destination and price. The Post ad button appears after setup: one click posts once to each channel. With assist in the warlock's raid you invite and queue \"inv\" whispers yourself."))
+      .. W.hex("comment", "The ad follows the main warlock's destination and price, and the middle sentence changes with the destination. The Ads tab has the Post ad button: one click posts once to each checked channel."))
   end }
 end
 

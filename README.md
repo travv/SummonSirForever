@@ -51,9 +51,9 @@ Every tab is visible to every role, so a clicker can read the ledger and the adv
 ### Ads
 <p align="center"><img src="./img/ads.png" alt="The Ads tab: channels, sync state, the ad as it will read, Post ad" width="760"/></p>
 
-- Shows which channels the ad posts to (default: General, Trade, Services, LookingForGroup; names work on every character, numbers like `1, 2, 8` differ per character), the sync state with the warlock, and the ad exactly as it will read.
+- One checkbox per chat channel this character has joined: tick the ones the ad goes to (default: General, Trade, Services, LookingForGroup). Then the sync state with the warlock, and the ad exactly as it will read.
 - **Post ad** posts once to each channel, then counts down the cooldown. Nothing posts on its own. On an advertiser the button reads "Waiting for warlock" until the warlock's destination and price have synced (group with them, or set their name in Setup).
-- Default ad: `WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST "inv" {spell}`. `{spell}` is a clickable [Ritual of Summoning] link.
+- Default ad: `WTS summon {dest} {price}. {blurb} PST "inv" {spell}`. `{blurb}` is a short line that fits the destination (Scarlet Monastery: "Skip the run through Tirisfal.", Booty Bay: "Flight path, neutral AH, Stranglethorn quests."), and `{spell}` is a clickable [Ritual of Summoning] link.
 - An advertiser with assist in the warlock's raid invites "inv" whisperers itself and puts them in the warlock's queue.
 
 ### Setup

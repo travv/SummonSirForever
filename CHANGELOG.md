@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-w21 (2026-11-12): channel checkboxes, ad text per destination
+
+- **Ad channels are checkboxes.** The Ads tab and the advertiser setup page list every chat channel this character has joined, one checkbox each; tick the ones the ad should go to. The long channel line that wrapped into the text below it is gone. The list is still saved by channel name, so /ssf channels and the settings box keep working, and a channel you listed but have not joined shows in orange.
+- **The ad fits the destination.** The default ad is now "WTS summon {dest} {price}. {blurb} PST "inv" [Ritual of Summoning]", where {blurb} is a short line per spot: Scarlet Monastery "Skip the run through Tirisfal.", Booty Bay "Flight path, neutral AH, Stranglethorn quests.", Gadgetzan "Zul'Farrak and the Tanaris quest hub.", Desolace "Flight path and quest turn-ins.", and so on for every preset (fallback "Skip the walk."). Saved copies of the old default ad upgrade once; your own ad text is kept, and {blurb} is available in it.
+
 ## 1.0.0-w20 (2026-11-12): shorter messages
 
 - Every customer message is rewritten shorter: "sir" once, no exclamation points, no carriage (the warlock player found the old lines a bit much). The five variants per type are kept, the price / 2 minutes / pay-by-trade facts stay in every first reply, and plain mode is unchanged. The same goes for the group announce, the summon whisper, the click nag and the AFK reply.

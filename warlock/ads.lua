@@ -88,8 +88,162 @@ function A:channel()
   return nil
 end
 
+-- one short line per destination for the {blurb} placeholder, so the ad says
+-- why someone would want THIS spot instead of the Desolace line everywhere
+A.BLURBS = {
+  sm = "Skip the run through Tirisfal.",
+  bb = "Flight path, neutral AH, Stranglethorn quests.",
+  gadget = "Zul'Farrak and the Tanaris quest hub.",
+  ulda = "Skip the Badlands run.",
+  desolace = "Flight path and quest turn-ins.",
+  zf = "Skip the Tanaris run.",
+  mara = "Skip the Desolace run.",
+  rfk = "Skip the Barrens run.",
+  rfd = "Skip the Barrens run.",
+  gnomer = "Skip the Dun Morogh run.",
+  sfk = "Skip the Silverpine run.",
+  st = "Skip the swamp run.",
+  brd = "Straight to the mountain.",
+  brs = "Straight to the mountain.",
+  mc = "Straight to the raid.",
+  ony = "Straight to the raid.",
+  bwl = "Straight to the raid.",
+  zg = "Straight to the raid.",
+  aq = "Straight to the raid.",
+  naxx = "Straight to the raid.",
+  dire = "Skip the Feralas run.",
+  strat = "Skip the Plaguelands run.",
+  scholo = "Skip the Plaguelands run.",
+  everlook = "Flight path and Winterspring quests.",
+  silithus = "Cenarion Hold flight path.",
+  ungoro = "Flight path and quest turn-ins.",
+  felwood = "Flight path and quests.",
+  epl = "Light's Hope flight path.",
+  wpl = "Flight path and quests.",
+  stv = "Stranglethorn quests.",
+  tanaris = "Gadgetzan flight path.",
+  feralas = "Flight path and quest hub.",
+  azshara = "Skip the long walk.",
+  searing = "Thorium Point flight path.",
+  steppes = "Flight path and quests.",
+  blasted = "Dark Portal quests.",
+  tm = "Flight path and quests.",
+  xroads = "Flight path and quests.",
+  hinter = "Flight path and quests.",
+  dustwallow = "Theramore flight path.",
+  org = "Skip the travel.", tb = "Skip the travel.", uc = "Skip the travel.",
+  sw = "Skip the travel.", ifo = "Skip the travel.", darn = "Skip the travel.",
+}
+A.DEFAULT_BLURB = "Skip the walk."
+
+function A.blurbFor(destKey)
+  return (destKey and A.BLURBS[destKey]) or A.DEFAULT_BLURB
+end
+
 function A:text()
   return W.fill(W.db.adTemplate, W.vars())
+end
+
+---------------------------------
+-- channel picker: one checkbox per channel this character has joined
+---------------------------------
+-- "General - Ironforge" -> "General"
+function A.baseName(name)
+  return (string.match(name or "", "^(.-)%s+%-%s+.+$") or name or "")
+end
+
+-- channels this character is in: { id, full, name }
+function A:joined()
+  local list = { GetChannelList() }
+  local out = {}
+  for i = 1, #list, 3 do
+    if type(list[i]) == "number" and type(list[i + 1]) == "string" then
+      table.insert(out, { id = list[i], full = list[i + 1], name = A.baseName(list[i + 1]) })
+    end
+  end
+  return out
+end
+
+-- is a joined channel (by base name) in the ad list, by name or by number?
+function A:listed(name)
+  for _, c in ipairs(self:channels()) do
+    if c.id and A.baseName(c.name) == name then return true end
+  end
+  return false
+end
+
+-- add or remove a channel; numeric entries are rewritten as names on the way
+function A:setListed(name, on)
+  local names, seen = {}, {}
+  for _, c in ipairs(self:channels()) do
+    local base = c.id and A.baseName(c.name) or tostring(c.want)
+    if base ~= name and not seen[base] then seen[base] = true; table.insert(names, base) end
+  end
+  if on and not seen[name] then table.insert(names, name) end
+  W.db.adChannels = table.concat(names, ", ")
+  W.fire("CONFIG_CHANGED")
+end
+
+A.MAX_PICK = 8
+
+-- a grid of checkboxes that edits W.db.adChannels; call picker.refresh()
+function A:buildPicker(parent, x, y, cols, colW)
+  local p = CreateFrame("Frame", nil, parent)
+  p:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+  p:SetSize(cols * colW, math.ceil(A.MAX_PICK / cols) * 22)
+  p.boxes = {}
+  for i = 1, A.MAX_PICK do
+    local c = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
+    c:SetSize(22, 22)
+    local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+    c:SetPoint("TOPLEFT", p, "TOPLEFT", col * colW, -row * 22)
+    c.label = c:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    c.label:SetPoint("LEFT", c, "RIGHT", 2, 0)
+    c.label:SetWidth(colW - 30)
+    c.label:SetJustifyH("LEFT")
+    c.label:SetWordWrap(false)
+    c:SetScript("OnClick", function(this)
+      if this.chan then A:setListed(this.chan, this:GetChecked() and true or false) end
+      p.refresh()
+    end)
+    c:Hide()
+    p.boxes[i] = c
+  end
+  p.more = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+  p.more:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, -2)
+  p.more:SetJustifyH("LEFT")
+  function p.refresh()
+    local items, seen = {}, {}
+    for _, j in ipairs(A:joined()) do
+      if not seen[j.name] then seen[j.name] = true; table.insert(items, { name = j.name, full = j.full, joined = true }) end
+    end
+    for _, c in ipairs(A:channels()) do
+      if not c.id and type(c.want) == "string" and not seen[c.want] then
+        seen[c.want] = true
+        table.insert(items, { name = c.want, full = c.want .. " (not joined)", joined = false })
+      end
+    end
+    for i, box in ipairs(p.boxes) do
+      local it = items[i]
+      if it then
+        box.chan = it.name
+        box.label:SetText(it.joined and it.full or W.hex("orange", it.full))
+        box:SetChecked(it.joined and A:listed(it.name) or not it.joined)
+        box:Show()
+      else
+        box.chan = nil
+        box:Hide()
+      end
+    end
+    if #items == 0 then
+      p.more:SetText(W.hex("orange", "You are not in any chat channel. /join General, /join Trade ..."))
+    elseif #items > #p.boxes then
+      p.more:SetText("+" .. (#items - #p.boxes) .. " more: /ssf channels")
+    else
+      p.more:SetText("")
+    end
+  end
+  return p
 end
 
 -- the advertiser's ad is only worth posting once the warlock has told it
@@ -113,21 +267,20 @@ function A:buildInto(parent)
   p.title:SetPoint("TOPLEFT", p, "TOPLEFT", 62, -30) -- right of the portrait circle
   p.title:SetText("Post ad")
 
-  p.channels = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  p.channels:SetPoint("TOPLEFT", p, "TOPLEFT", 14, -56)
-  p.channels:SetPoint("RIGHT", p, "RIGHT", -14, 0)
-  p.channels:SetJustifyH("LEFT")
-  p.channels:SetWordWrap(true)
+  p.pickLabel = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  p.pickLabel:SetPoint("TOPLEFT", p, "TOPLEFT", 14, -56)
+  p.pickLabel:SetText("Posts to the checked channels:")
+  p.picker = A:buildPicker(p, 14, -70, 2, 215)
 
   p.sync = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  p.sync:SetPoint("TOPLEFT", p, "TOPLEFT", 14, -84)
+  p.sync:SetPoint("TOPLEFT", p, "TOPLEFT", 14, -170)
   p.sync:SetPoint("RIGHT", p, "RIGHT", -14, 0)
   p.sync:SetJustifyH("LEFT")
   p.sync:SetWordWrap(true)
 
   -- the ad, as it will read, in its own box
   p.inset = CreateFrame("Frame", nil, p, "InsetFrameTemplate")
-  p.inset:SetPoint("TOPLEFT", p, "TOPLEFT", 8, -112)
+  p.inset:SetPoint("TOPLEFT", p, "TOPLEFT", 8, -196)
   p.inset:SetPoint("RIGHT", p, "RIGHT", -8, 0)
   p.inset:SetHeight(60) -- refresh() fits it to the ad text
   p.preview = p.inset:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -169,7 +322,7 @@ end
 function A:refresh()
   local p = self.page
   if not p or not p:IsShown() then return end
-  p.channels:SetText(W.hex("comment", "Posts to: ") .. self:channelSummary())
+  p.picker.refresh()
   if W.role() == "advertiser" then
     if self:synced() then
       p.sync:SetText(W.hex("green", "Synced with " .. tostring(W.db.lockName or "the warlock") .. ": ")
@@ -202,7 +355,7 @@ function A:init()
   W.on("CONFIG_CHANGED", function() A:refresh() end)
   C_Timer.NewTicker(1, function() A:refresh() end)
 
-  W.command("adtext", "adtext <template>: {dest} {price} {lock} {spell} are filled in", function(args)
+  W.command("adtext", "adtext <template>: {dest} {price} {blurb} {lock} {spell} are filled in", function(args)
     if args ~= "" then W.db.adTemplate = args end
     W.print("ad:", A:text())
     W.fire("CONFIG_CHANGED")

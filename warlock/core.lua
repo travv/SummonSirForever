@@ -106,7 +106,7 @@ W.DEFAULTS = {
   soundPaid = true,       -- coin sound when a payment is recorded
   adChannel = "Services",  -- (pre-w9 single channel; adChannels replaces it)
   adChannels = "General, Trade, Services, LookingForGroup",  -- names resolve on every character (w16); LFG is the opt-in global channel (Travis, w18)
-  adTemplate = "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
+  adTemplate = "WTS summon {dest} {price}. {blurb} PST \"inv\" {spell}",  -- {blurb} fits the destination (ads.lua)
   replyText = "Summon to {dest} is {price}, sir. Invite sent: accept it and the summon within 2 min, pay by trade when you land.",
   wrongDestText = "Sorry, sir, I'm summoning to {dest} right now, not {asked}.",
   advertiserReplyText = "Whisper {lock} \"123\" for a summon to {dest}, sir ({price}).",
@@ -120,6 +120,7 @@ W.DEFAULTS = {
 W.STOCK = {
   adChannels = { "1, 2, 8", "General, Trade, Services" }, -- w16 names; w18 adds LookingForGroup
   adTemplate = {
+    "WTS summon {dest} {price}. Come get your flight path or quest turn-ins! PST \"inv\" {spell}",
     "{dest} summons {price}! /w {lock} 123",
     "Summons to {dest} for {price}, sir! /w {lock} 123, then sit back and relax!",
   },
@@ -363,6 +364,7 @@ function W.vars(extra)
     price = W.fmtMoney(W.priceFor(W.destKey())),
     lock = W.lockName(),
     spell = W.spellLink(),
+    blurb = (addonData.ads and addonData.ads.blurbFor) and addonData.ads.blurbFor(W.destKey()) or "",
   }
   for k, val in pairs(extra or {}) do v[k] = val end
   return v

@@ -365,7 +365,7 @@ function O:build()
                   and W.hex("green", "Synced with " .. tostring(db().lockName) .. ": " .. W.destName() .. ", " .. W.fmtMoney(W.priceFor(W.destKey())))
                   or W.hex("orange", "Not synced with the main warlock yet. Group with them, or type their name above."))
               end
-              return placeholders("{dest} {price} {lock} {spell} (the [Ritual of Summoning] link)")
+              return placeholders("{dest} {price} {blurb} {lock} {spell}. {blurb} is a short line that fits the destination (Scarlet Monastery: \"Skip the run through Tirisfal.\"); {spell} is the [Ritual of Summoning] link")
                 .. "\n" .. W.hex("purple", "Preview: ") .. W.ads:text()
                 .. "\n" .. "Posts to: " .. W.ads:channelSummary() .. sync
                 .. "\n" .. W.hex("comment", "Ads only go out when you click Ad or Post ad: one click, once per channel.")
