@@ -313,20 +313,39 @@ W.module("options", O)
 
 -- called from optionsgui:init with the parent category name
 function O:register(parentName)
+  -- the table is registered on its own first, so the standalone window works
+  -- even if the Settings page can't be added
   local ok, err = pcall(function()
     LibStub("AceConfig-3.0"):RegisterOptionsTable("SummonSirService", function() return O:build() end)
+  end)
+  if not ok then W.print("options failed:", err) return end
+  ok, err = pcall(function()
     local _, id = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("SummonSirService", "Summon service", parentName)
     O.categoryID = id
   end)
-  if not ok then W.print("options page failed:", err) end
+  if not ok then W.print("Settings page not added (use /sw options for the window):", err) end
 end
 
-function O:open()
+-- standalone AceConfig window: works even if the Settings panel can't be opened
+function O:openWindow()
+  local ok, err = pcall(function() LibStub("AceConfigDialog-3.0"):Open("SummonSirService") end)
+  if not ok then W.print("options window failed:", err) end
+  return ok
+end
+
+-- Settings > AddOns page first; if it did not actually appear by the next
+-- frame, fall back to the standalone window. onDone(true) once something opened.
+function O:open(onDone)
   if InCombatLockdown() then W.print("options can't open in combat") return end
+  local tried = false
   if O.categoryID and Settings and Settings.OpenToCategory then
-    if pcall(Settings.OpenToCategory, O.categoryID) then return end
+    tried = pcall(Settings.OpenToCategory, O.categoryID)
   end
-  if addonData.optionsgui then addonData.optionsgui:show() end
+  C_Timer.After(0, function()
+    local shown = tried and SettingsPanel and SettingsPanel:IsShown()
+    if not shown then shown = O:openWindow() end
+    if onDone then onDone(shown) end
+  end)
 end
 
 function O:init()

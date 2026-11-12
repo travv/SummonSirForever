@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-w4 (2026-11-11): settings fix
+
+- **Fix: the Options button closed the ledger and opened nothing.** The bundled Ace3 (AceConfigDialog r81, from around 2020) registers settings pages through `InterfaceOptions_AddCategory`, which the Forever client doesn't have. The page was never added, and the original options likely errored at login.
+- Updated the bundled Ace3 to **Release-r1403** (AceConfigDialog r92), which uses Forever's `Settings` / `C_SettingsUtil` API.
+- The Options button now checks that the Settings page actually opened. If it didn't, it opens a standalone options window, and the ledger panel only closes once something has opened.
+
 ## 1.0.0-w3 (2026-11-11): settings page
 
 - New **Summon service** page in Settings > AddOns > SummonSirForever. It holds every `/sw` setting:
